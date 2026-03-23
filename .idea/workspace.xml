@@ -5,125 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5fd48c8d-7972-4e84-93d3-eb9060bb6e29" name="更改" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/小说.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/css/admin.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/css/books.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/css/common.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/css/filters.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/css/input.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/css/tailwind.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/css/user-profile.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/imgs/book.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/imgs/log.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/js/admin-books.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/js/admin-orders.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/js/admin-users.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/js/book-detail.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/js/book-list.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/js/bookshelf-debug.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/js/common.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/js/config.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/js/index.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/js/main.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/js/user-profile.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/assets/js/utils.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/static/css/admin-book-search.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/static/css/admin-common.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/static/js/admin-book-search.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/static/js/admin-common.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/base.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/novel_app/admin_action_toolbar.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/novel_app/admin_base_nav.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/novel_app/admin_books.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/novel_app/admin_dashboard.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/novel_app/admin_orders.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/novel_app/admin_pagination.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/novel_app/admin_search_filter.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/novel_app/admin_users.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/novel_app/book_detail.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/novel_app/book_list.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/novel_app/bookshelf.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/novel_app/chapter_detail.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/novel_app/crawler_monitor.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/novel_app/index.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/novel_app/login.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/novel_app/register.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/novel_app/shopping_cart.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/novel_app/user_orders.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/frontend/templates/novel_app/user_profile.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/generated_data/admins.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/generated_data/book_evaluations.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/generated_data/cart_items.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/generated_data/orders.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/generated_data/user_book_ownership.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/generated_data/users.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/manage.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/media/avatars/9ad1f1b0f03fc80f6c53ae792f45866.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/media/avatars/屏幕截图_2025-09-23_094318.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/media/avatars/屏幕截图_2025-09-23_094318_zGiEZcW.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/media/avatars/屏幕截图_2025-09-23_094527.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/media/avatars/屏幕截图_2025-09-24_192543.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/media/avatars/屏幕截图_2025-10-30_121600.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/media/book_contents/网游：重生后我获得最强天赋_第10章  妹纸，你摊上大事了.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/media/book_contents/网游：重生后我获得最强天赋_第1章  奇葩的天赋.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/media/book_contents/网游：重生后我获得最强天赋_第2章  我也不想啊，钱给得太多了.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/media/book_contents/网游：重生后我获得最强天赋_第3章  疮口太大，液弹冲击.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/media/book_contents/网游：重生后我获得最强天赋_第4章  野猪王，你在玩火.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/media/book_contents/网游：重生后我获得最强天赋_第5章  大冤种，深海炸弹.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/media/book_contents/网游：重生后我获得最强天赋_第6章  魔界导师，龙凰传承.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/media/book_contents/网游：重生后我获得最强天赋_第7章  神秘的主线任务.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/media/book_contents/网游：重生后我获得最强天赋_第8章  奉天榜一， 黑夜家族.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/media/book_contents/网游：重生后我获得最强天赋_第9章  神技，破盾斩.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/admin.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/apps.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/auth_backends.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/auth_utils.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/business_utils.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/context_processors.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/cover_manager.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/crawler_monitor.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/crawler_service.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/database_detector.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/management/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/management/commands/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/management/commands/import_book_from_qimao.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/management/commands/init_admin.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/management/commands/migrate_to_whole_book.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/management/commands/migrate_to_whole_book_purchase.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/management/commands/optimize_system_performance.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/management/commands/recalculate_collection_counts.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/management/commands/remove_duplicate_books.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/management/commands/validate_book_ownership.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/models.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/services/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/services/api_urls.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/services/api_views.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/services/audit_service.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/services/book_service.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/services/book_views.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/services/decorators.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/services/discount_service.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/services/error_handler.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/services/exceptions.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/services/file_service.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/services/user_views.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/templatetags/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/templatetags/book_tags.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/test_crawler_monitor.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/tests/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/tests/test_auth_utils.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/tests/test_business_utils.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/tests/test_models.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/urls.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_app/views.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_system/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_system/asgi.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_system/settings.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_system/urls.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Django前端系统/novel_system/wsgi.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/novel_system/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/novel_system/settings.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -133,28 +16,28 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 7
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
   <component name="ProjectId" id="3BL51NTfz3a6usPS6YXYeLTeOOe" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenDjangoStructureViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "D:/面试/小说",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenDjangoStructureViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/面试/小说&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration name="小说" type="Python.DjangoServer" factoryName="Django server">
       <module name="小说" />
@@ -197,7 +80,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1774255293636</updated>
-      <workItem from="1774255294732" duration="1448000" />
+      <workItem from="1774255294732" duration="3766000" />
     </task>
     <servers />
   </component>
