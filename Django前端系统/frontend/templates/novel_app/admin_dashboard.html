@@ -1,0 +1,491 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}管理员中心 - 小说阅读系统{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- 管理员导航区域 -->
+    <div class="admin-nav-section" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important; border: 1px solid #e2e8f0 !important; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important; position: relative !important; overflow: hidden !important;">
+        <!-- 装饰性背景元素 -->
+        <div style="position: absolute; top: -30%; right: -15%; width: 120px; height: 120px; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); border-radius: 50%; opacity: 0.6;"></div>
+        <div style="position: absolute; bottom: -20%; left: -10%; width: 80px; height: 80px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 50%; opacity: 0.8;"></div>
+        
+        <div class="admin-nav-header" style="border-bottom: 1px solid #e2e8f0 !important; position: relative !important; z-index: 2 !important;">
+            <h1 style="color: #1e293b !important; font-weight: 700 !important; background: linear-gradient(135deg, #1e293b 0%, #475569 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">管理员中心</h1>
+            <p style="color: #64748b !important; font-weight: 400 !important;">欢迎回来，{{ request.session.username }}</p>
+        </div>
+        
+        <div class="admin-nav-options" style="position: relative !important; z-index: 2 !important;">
+            <a href="{% url 'admin_dashboard' %}" class="admin-nav-option active" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important; border: 1px solid #3b82f6 !important; color: white !important; transition: all 0.3s ease !important; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2) !important;">
+                <i class="fas fa-tachometer-alt" style="font-size: 1.1rem !important;"></i>
+                <span style="font-weight: 500 !important;">数据概览</span>
+            </a>
+            <a href="{% url 'admin_books' %}" class="admin-nav-option" style="background: #f8fafc !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; transition: all 0.3s ease !important;">
+                <i class="fas fa-book" style="font-size: 1.1rem !important;"></i>
+                <span style="font-weight: 500 !important;">书籍管理</span>
+            </a>
+            <a href="{% url 'admin_users' %}" class="admin-nav-option" style="background: #f8fafc !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; transition: all 0.3s ease !important;">
+                <i class="fas fa-users" style="font-size: 1.1rem !important;"></i>
+                <span style="font-weight: 500 !important;">用户管理</span>
+            </a>
+            <a href="{% url 'admin_orders' %}" class="admin-nav-option" style="background: #f8fafc !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; transition: all 0.3s ease !important;">
+                <i class="fas fa-shopping-bag" style="font-size: 1.1rem !important;"></i>
+                <span style="font-weight: 500 !important;">订单管理</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 统计卡片区域 -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon bg-blue-100 text-blue-600">
+                <i class="fas fa-book"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number">{{ total_books }}</div>
+                <div class="stat-label">总书籍数</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>较昨日 +{{ books_today|default:0 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon bg-green-100 text-green-600">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number">{{ total_users }}</div>
+                <div class="stat-label">总用户数</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>较昨日 +{{ users_today|default:0 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon bg-yellow-100 text-yellow-600">
+                <i class="fas fa-shopping-bag"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number">{{ total_orders }}</div>
+                <div class="stat-label">总订单数</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>较昨日 +{{ orders_today|default:0 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon bg-purple-100 text-purple-600">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number">{{ total_chapters }}</div>
+                <div class="stat-label">总章节数</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>较昨日 +{{ chapters_today|default:0 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据可视化区域 -->
+    <div class="visualization-grid">
+        <!-- 分类统计 - 玫瑰图 -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">书籍分类统计</h3>
+                <div class="chart-actions">
+                    <button class="chart-action-btn" onclick="refreshChart('category')">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-content">
+                <div class="chart-container">
+                    <canvas id="categoryChart" width="400" height="300"></canvas>
+                </div>
+                <div class="chart-legend" id="categoryLegend">
+                    <!-- 图例将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 订单状态统计 - 饼图 -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">订单状态统计</h3>
+                <div class="chart-actions">
+                    <button class="chart-action-btn" onclick="refreshChart('orders')">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-content">
+                <div class="chart-container">
+                    <canvas id="orderChart" width="400" height="300"></canvas>
+                </div>
+                <div class="chart-legend" id="orderLegend">
+                    <!-- 图例将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 最新动态区域 -->
+    <div class="activity-grid">
+        <!-- 最新书籍 -->
+        <div class="activity-card">
+            <div class="activity-header">
+                <h3 class="activity-title">
+                    <i class="fas fa-book text-blue-600 mr-2"></i>
+                    最新添加书籍
+                </h3>
+                <a href="{% url 'admin_books' %}" class="activity-more">查看全部</a>
+            </div>
+            <div class="activity-content">
+                {% for book in recent_books %}
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-book text-blue-600"></i>
+                    </div>
+                    <div class="activity-info">
+                        <div class="activity-main">{{ book.title }}</div>
+                        <div class="activity-sub">{{ book.author }} · {{ book.category }}</div>
+                    </div>
+                    <div class="activity-time">{{ book.create_time|date:"m-d H:i" }}</div>
+                </div>
+                {% empty %}
+                <div class="activity-empty">
+                    <i class="fas fa-inbox text-gray-300"></i>
+                    <span>暂无数据</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 最新用户 -->
+        <div class="activity-card">
+            <div class="activity-header">
+                <h3 class="activity-title">
+                    <i class="fas fa-user-plus text-green-600 mr-2"></i>
+                    最新注册用户
+                </h3>
+                <a href="{% url 'admin_users' %}" class="activity-more">查看全部</a>
+            </div>
+            <div class="activity-content">
+                {% for user in recent_users %}
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-user text-green-600"></i>
+                    </div>
+                    <div class="activity-info">
+                        <div class="activity-main">{{ user.name }}</div>
+                        <div class="activity-sub">{{ user.username }}</div>
+                    </div>
+                    <div class="activity-time">{{ user.register_time|date:"m-d H:i" }}</div>
+                </div>
+                {% empty %}
+                <div class="activity-empty">
+                    <i class="fas fa-inbox text-gray-300"></i>
+                    <span>暂无数据</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 最新订单 -->
+        <div class="activity-card">
+            <div class="activity-header">
+                <h3 class="activity-title">
+                    <i class="fas fa-shopping-cart text-yellow-600 mr-2"></i>
+                    最新订单
+                </h3>
+                <a href="{% url 'admin_orders' %}" class="activity-more">查看全部</a>
+            </div>
+            <div class="activity-content">
+                {% for order in recent_orders %}
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-shopping-bag text-yellow-600"></i>
+                    </div>
+                    <div class="activity-info">
+                        <div class="activity-main">{{ order.customer_name }}</div>
+                        <div class="activity-sub">¥{{ order.order_amount }} · {{ order.order_status }}</div>
+                    </div>
+                    <div class="activity-time">{{ order.create_time|date:"m-d H:i" }}</div>
+                </div>
+                {% empty %}
+                <div class="activity-empty">
+                    <i class="fas fa-inbox text-gray-300"></i>
+                    <span>暂无数据</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/admin.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+<script>
+// 图表数据
+const categoryData = JSON.parse('{{ category_stats_json|escapejs }}');
+const orderData = JSON.parse('{{ order_status_stats_json|escapejs }}');
+
+// 颜色配置
+const categoryColors = [
+    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+    '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+    '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D7BDE2'
+];
+
+const orderColors = {
+    '待支付': '#F39C12',
+    '已支付': '#3498DB', 
+    '已取消': '#E74C3C'
+};
+
+// 初始化分类玫瑰图
+function initCategoryChart() {
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    
+    const labels = categoryData.map(item => item.category);
+    const data = categoryData.map(item => item.count);
+    const colors = categoryColors.slice(0, labels.length);
+    
+    new Chart(ctx, {
+        type: 'polarArea',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors.map(color => color + '80'),
+                borderColor: colors,
+                borderWidth: 2,
+                hoverBackgroundColor: colors.map(color => color + 'CC'),
+                hoverBorderColor: colors,
+                hoverBorderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed;
+                            const total = data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${label}: ${value}本 (${percentage}%)`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    ticks: {
+                        display: false
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                }
+            },
+            animation: {
+                animateRotate: true,
+                animateScale: true,
+                duration: 2000,
+                easing: 'easeOutQuart'
+            }
+        }
+    });
+    
+    // 生成自定义图例
+    generateCategoryLegend(labels, data, colors);
+}
+
+// 初始化订单饼图
+function initOrderChart() {
+    const ctx = document.getElementById('orderChart').getContext('2d');
+    
+    const labels = orderData.map(item => item.order_status);
+    const data = orderData.map(item => item.count);
+    const colors = labels.map(label => orderColors[label] || '#95A5A6');
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors.map(color => color + 'CC'),
+                borderColor: colors,
+                borderWidth: 3,
+                hoverBackgroundColor: colors,
+                hoverBorderColor: '#fff',
+                hoverBorderWidth: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '60%',
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed;
+                            const total = data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${label}: ${value}个 (${percentage}%)`;
+                        }
+                    }
+                }
+            },
+            animation: {
+                animateRotate: true,
+                animateScale: true,
+                duration: 2000,
+                easing: 'easeOutQuart'
+            }
+        }
+    });
+    
+    // 生成自定义图例
+    generateOrderLegend(labels, data, colors);
+}
+
+// 生成分类图例
+function generateCategoryLegend(labels, data, colors) {
+    const legendContainer = document.getElementById('categoryLegend');
+    legendContainer.innerHTML = '';
+    
+    labels.forEach((label, index) => {
+        const legendItem = document.createElement('div');
+        legendItem.className = 'legend-item';
+        legendItem.innerHTML = `
+            <div class="legend-color" style="background-color: ${colors[index]}"></div>
+            <span class="legend-label">${label}</span>
+            <span class="legend-value">${data[index]}本</span>
+        `;
+        legendContainer.appendChild(legendItem);
+    });
+}
+
+// 生成订单图例
+function generateOrderLegend(labels, data, colors) {
+    const legendContainer = document.getElementById('orderLegend');
+    legendContainer.innerHTML = '';
+    
+    labels.forEach((label, index) => {
+        const legendItem = document.createElement('div');
+        legendItem.className = 'legend-item';
+        legendItem.innerHTML = `
+            <div class="legend-color" style="background-color: ${colors[index]}"></div>
+            <span class="legend-label">${label}</span>
+            <span class="legend-value">${data[index]}个</span>
+        `;
+        legendContainer.appendChild(legendItem);
+    });
+}
+
+// 刷新图表
+function refreshChart(type) {
+    const btn = event.target.closest('.chart-action-btn');
+    const icon = btn.querySelector('i');
+    
+    // 添加旋转动画
+    icon.classList.add('fa-spin');
+    
+    // 模拟数据刷新
+    setTimeout(() => {
+        icon.classList.remove('fa-spin');
+        showMessage('数据已刷新', 'success');
+        
+        // 重新初始化图表
+        if (type === 'category') {
+            initCategoryChart();
+        } else if (type === 'orders') {
+            initOrderChart();
+        }
+    }, 1000);
+}
+
+// 显示消息提示
+function showMessage(message, type) {
+    const alertClass = type === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700';
+    const iconClass = type === 'success' ? 'fa-check-circle text-green-400' : 'fa-exclamation-circle text-red-400';
+    
+    const alertHtml = `
+        <div class="fixed top-4 right-4 z-50 max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden">
+            <div class="p-4">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas ${iconClass}"></i>
+                    </div>
+                    <div class="ml-3 w-0 flex-1 pt-0.5">
+                        <p class="text-sm font-medium text-gray-900">${message}</p>
+                    </div>
+                    <div class="ml-4 flex-shrink-0 flex">
+                        <button class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', alertHtml);
+    
+    // 3秒后自动消失
+    setTimeout(() => {
+        const alert = document.querySelector('.fixed.top-4.right-4');
+        if (alert) {
+            alert.remove();
+        }
+    }, 3000);
+}
+
+// 页面加载完成后的初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 添加统计卡片的动画效果
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+    
+    // 初始化图表
+    initCategoryChart();
+    initOrderChart();
+});
+</script>
+{% endblock %}

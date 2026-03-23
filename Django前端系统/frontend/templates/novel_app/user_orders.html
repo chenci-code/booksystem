@@ -1,0 +1,642 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}我的订单 - 小说阅读系统{% endblock %}
+
+{% block content %}
+<div class="user-orders-container">
+    <div class="orders-header">
+        <div class="orders-title-section">
+            <div class="orders-title-icon">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <h1>我的订单</h1>
+        </div>
+        <div class="orders-actions">
+            <a href="{% url 'user_profile' %}" class="action-btn outline-btn">
+                <i class="fas fa-user"></i>
+                <span>个人中心</span>
+            </a>
+        </div>
+    </div>
+    
+    {% if orders %}
+    <!-- 订单列表 -->
+    <div class="orders-layout">
+        <div class="orders-section">
+            <div class="orders-card">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-list"></i>
+                    </div>
+                    <h2>订单列表</h2>
+                    <div class="section-status">
+                        <i class="fas fa-info-circle"></i>
+                        <span>共{{ orders|length }}个订单</span>
+                    </div>
+                </div>
+                <div class="section-content">
+                    {% for order in orders %}
+                    <div class="order-item" data-order-id="{{ order.order_id }}">
+                        <div class="order-content">
+                            <div class="order-header">
+                                <div class="order-info">
+                                    <h3 class="order-number">订单号：{{ order.order_number }}</h3>
+                                    <p class="order-time">{{ order.create_time|date:"Y-m-d H:i:s" }}</p>
+                                </div>
+                                <div class="order-status">
+                                    <span class="status-tag status-{{ order.order_status|lower }}">
+                                        {% if order.order_status == '已支付' %}
+                                        <i class="fas fa-check-circle"></i>
+                                        {% elif order.order_status == '待支付' %}
+                                        <i class="fas fa-clock"></i>
+                                        {% elif order.order_status == '已取消' %}
+                                        <i class="fas fa-times-circle"></i>
+                                        {% endif %}
+                                        {{ order.order_status }}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="order-details">
+                                <div class="order-books">
+                                    <div class="books-info">
+                                        <h4>购买内容：</h4>
+                                        <div class="books-list">
+                                            {% for book_title in order.book_titles %}
+                                            <span class="book-tag">{{ book_title }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="order-summary">
+                                        <div class="summary-item">
+                                            <span class="summary-label">购买模式：</span>
+                                            <span class="summary-value">整本购买</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="summary-label">书籍数量：</span>
+                                            <span class="summary-value">{{ order.chapter_count }}本</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="summary-label">订单金额：</span>
+                                            <span class="summary-value order-amount">¥{{ order.order_amount|floatformat:2 }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="order-actions">
+                                <button class="action-btn primary-btn" onclick="viewOrderDetail({{ order.order_id }})">
+                                    <i class="fas fa-eye"></i>
+                                    <span>查看详情</span>
+                                </button>
+                                {% if order.order_status == '已支付' %}
+                                <button class="action-btn success-btn" onclick="downloadOrder({{ order.order_id }})">
+                                    <i class="fas fa-download"></i>
+                                    <span>下载订单</span>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <!-- 空订单状态 -->
+    <div class="empty-orders">
+        <div class="empty-orders-icon">
+            <i class="fas fa-receipt"></i>
+        </div>
+        <h2>暂无订单</h2>
+        <p>您还没有任何订单记录</p>
+        <a href="{% url 'book_list' %}" class="empty-orders-btn">
+            <i class="fas fa-search"></i>
+            <span>去书城逛逛</span>
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 订单详情模态框 -->
+<div id="orderDetailModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-10 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">订单详情</h3>
+                <button onclick="hideOrderDetailModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="orderDetailContent" class="order-detail-content">
+                <!-- 订单详情内容将在这里动态加载 -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/common.css' %}" rel="stylesheet">
+<style>
+/* 用户订单页面样式 */
+.user-orders-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.orders-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1.5rem 2rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+}
+
+.orders-title-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.orders-title-icon {
+    width: 50px;
+    height: 50px;
+    background: #007bff;
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.orders-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.orders-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.action-btn i {
+    font-size: 1rem;
+}
+
+.outline-btn {
+    background: transparent;
+    color: #6c757d;
+    border: 2px solid #dee2e6;
+}
+
+.outline-btn:hover {
+    background: #6c757d;
+    color: white;
+    border-color: #6c757d;
+    text-decoration: none;
+}
+
+/* 订单布局 */
+.orders-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.orders-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.orders-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+}
+
+.section-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.section-icon {
+    width: 40px;
+    height: 40px;
+    background: #007bff;
+    color: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.section-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+    flex: 1;
+}
+
+.section-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.section-content {
+    padding: 2rem;
+}
+
+/* 订单项 */
+.order-item {
+    border-bottom: 1px solid #f1f3f4;
+    padding: 1.5rem 0;
+    transition: all 0.3s ease;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.order-item:hover {
+    background: #f8f9fa;
+    margin: 0 -2rem;
+    padding: 1.5rem 2rem;
+    border-radius: 8px;
+}
+
+.order-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.order-info h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 0.25rem 0;
+}
+
+.order-info p {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+.order-status {
+    display: flex;
+    align-items: center;
+}
+
+.status-tag {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.status-已支付 {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-待支付 {
+    background: #fff3cd;
+    color: #856404;
+}
+
+
+.status-已取消 {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.order-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.order-books {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+}
+
+.books-info h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 0.5rem 0;
+}
+
+.books-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.book-tag {
+    background: #e9ecef;
+    color: #495057;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.order-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 200px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.summary-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.summary-value {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.summary-value.order-amount {
+    color: #dc3545;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.order-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.primary-btn {
+    background: #007bff;
+    color: white;
+}
+
+.primary-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+
+.success-btn {
+    background: #28a745;
+    color: white;
+}
+
+.success-btn:hover {
+    background: #1e7e34;
+    transform: translateY(-2px);
+}
+
+/* 空订单状态 */
+.empty-orders {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+}
+
+.empty-orders-icon {
+    font-size: 4rem;
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+    opacity: 0.5;
+}
+
+.empty-orders h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+}
+
+.empty-orders p {
+    font-size: 1rem;
+    color: #6c757d;
+    margin-bottom: 2rem;
+}
+
+.empty-orders-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    background: #007bff;
+    color: white;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.empty-orders-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+    text-decoration: none;
+    color: white;
+}
+
+/* 订单详情模态框 */
+.order-detail-content {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .order-books {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .order-summary {
+        min-width: auto;
+    }
+    
+    .order-actions {
+        flex-direction: column;
+    }
+    
+    .orders-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .orders-title-section {
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 查看订单详情
+function viewOrderDetail(orderId) {
+    fetch(`/api/user/get-order-detail/${orderId}/`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayOrderDetail(data.order);
+            document.getElementById('orderDetailModal').classList.remove('hidden');
+        } else {
+            showMessage(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('获取订单详情失败', 'error');
+    });
+}
+
+// 显示订单详情
+function displayOrderDetail(order) {
+    const content = document.getElementById('orderDetailContent');
+    
+    // 从API响应中获取books数据（如果存在）
+    let books = order.books || [];
+    let booksHtml = '';
+    if (books.length > 0) {
+        booksHtml = books.map(book => `
+            <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                <div>
+                    <span class="font-medium">${book.book_title || '未知书名'}</span>
+                    ${book.author ? `<p class="text-sm text-gray-600">作者：${book.author}</p>` : ''}
+                    ${book.category ? `<p class="text-sm text-gray-500">分类：${book.category}</p>` : ''}
+                </div>
+                <div class="text-right">
+                    <span class="font-semibold text-green-600">¥${parseFloat(book.price || 0).toFixed(2)}</span>
+                    ${(book.quantity || 1) > 1 ? `<p class="text-sm text-gray-500">x${book.quantity}</p>` : ''}
+                </div>
+            </div>
+        `).join('');
+    } else {
+        booksHtml = '<div class="text-gray-500 text-sm py-4 text-center">暂无书籍信息</div>';
+    }
+    
+    // 计算书籍数量
+    let bookCount = order.book_count || (books.length > 0 ? books.reduce((sum, book) => sum + (book.quantity || 1), 0) : 0);
+    
+    content.innerHTML = `
+        <div class="space-y-4">
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="font-semibold mb-2">订单信息</h4>
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div><span class="text-gray-600">订单号：</span><span class="font-medium">${order.order_number}</span></div>
+                    <div><span class="text-gray-600">订单状态：</span><span class="font-medium">${order.order_status}</span></div>
+                    <div><span class="text-gray-600">创建时间：</span><span class="font-medium">${order.create_time}</span></div>
+                    <div><span class="text-gray-600">支付时间：</span><span class="font-medium">${order.payment_time || '未支付'}</span></div>
+                    <div><span class="text-gray-600">订单金额：</span><span class="font-medium text-green-600">¥${parseFloat(order.actual_amount || order.order_amount || 0).toFixed(2)}</span></div>
+                    <div><span class="text-gray-600">书籍数量：</span><span class="font-medium">${bookCount} 本</span></div>
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="font-semibold mb-2">购买书籍</h4>
+                <div class="space-y-2 max-h-64 overflow-y-auto">
+                    ${booksHtml}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// 隐藏订单详情模态框
+function hideOrderDetailModal() {
+    document.getElementById('orderDetailModal').classList.add('hidden');
+}
+
+// 下载订单
+function downloadOrder(orderId) {
+    // 这里可以实现订单下载功能
+    showMessage('订单下载功能待实现', 'info');
+}
+
+// 显示消息函数
+function showMessage(message, type) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transition-all duration-300 ${
+        type === 'success' ? 'bg-green-500 text-white' : 
+        type === 'error' ? 'bg-red-500 text-white' : 
+        type === 'info' ? 'bg-blue-500 text-white' :
+        'bg-gray-500 text-white'
+    }`;
+    messageDiv.textContent = message;
+    
+    document.body.appendChild(messageDiv);
+    
+    // 3秒后自动移除
+    setTimeout(() => {
+        messageDiv.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}
+
+
+

@@ -1,0 +1,438 @@
+/* 用户中心页面样式 */
+
+/* 导航菜单样式 */
+.nav-item {
+    display: block;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    transition: all 0.2s ease-in-out;
+    text-decoration: none;
+    border-radius: 0.375rem;
+    margin: 0.125rem;
+}
+
+.nav-item:hover {
+    background-color: #f9fafb;
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.nav-item.active {
+    background-color: #eff6ff;
+    color: #2563eb;
+    border-right: 2px solid #2563eb;
+}
+
+/* 用户头像样式 */
+.user-avatar {
+    text-align: center;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.user-avatar img {
+    border-radius: 50%;
+    object-fit: cover;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 3px solid #3b82f6;
+}
+
+.user-avatar img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.user-avatar .group:hover img {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.user-avatar button {
+    transition: all 0.2s ease;
+    font-weight: 500;
+    letter-spacing: 0.025em;
+}
+
+.user-avatar button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+}
+
+.user-avatar i {
+    color: #0ea5e9;
+    font-size: 4rem;
+}
+
+/* 导航栏头像样式 */
+.navbar-avatar {
+    transition: all 0.3s ease;
+    border: 2px solid #3b82f6;
+}
+
+.navbar-avatar:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* 头像悬停遮罩效果 */
+.avatar-overlay {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+/* 头像边框动画 */
+@keyframes avatar-border-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    }
+}
+
+.user-avatar.group:hover img {
+    animation: avatar-border-pulse 1.5s infinite;
+}
+
+/* 统计项样式 */
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+}
+
+.stat-item:hover {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-color: #0ea5e9;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0ea5e9;
+    display: block;
+    margin-top: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+/* 内容区域 */
+.content-section {
+    min-height: 24rem;
+}
+
+/* 信息项样式 */
+.info-item {
+    padding: 0.5rem 0;
+}
+
+.info-item label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.25rem;
+}
+
+.info-item p {
+    color: #111827;
+    font-weight: 500;
+}
+
+/* 评价项样式 */
+.review-item {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid #0ea5e9;
+    border: 1px solid #e5e7eb;
+}
+
+/* 订单书籍标签 */
+.order-books .badge {
+    font-size: 0.75rem;
+}
+
+/* 书架样式 */
+.bookshelf-card {
+    position: relative;
+}
+
+.reading-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 0 0 12px 12px;
+}
+
+.progress {
+    height: 4px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #059669);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 0.75rem;
+    opacity: 0.9;
+}
+
+/* 购物车样式 */
+.cart-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    background: white;
+    transition: all 0.2s ease;
+}
+
+.cart-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #0ea5e9;
+}
+
+.price {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #ef4444;
+}
+
+/* 章节列表样式 */
+.chapter-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.chapter-item {
+    border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.2s ease;
+}
+
+.chapter-item:last-child {
+    border-bottom: none;
+}
+
+.chapter-item:hover {
+    background-color: #f9fafb;
+}
+
+.chapter-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    text-decoration: none;
+    color: #374151;
+    transition: all 0.2s ease;
+}
+
+.chapter-link:hover {
+    background-color: #f0f9ff;
+    color: #0ea5e9;
+    text-decoration: none;
+}
+
+.chapter-number {
+    font-weight: 600;
+    color: #0ea5e9;
+    min-width: 80px;
+}
+
+.chapter-title {
+    flex-grow: 1;
+    margin: 0 1rem;
+    font-weight: 500;
+}
+
+.chapter-word-count {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+/* 头像上传模态框样式 */
+#avatarUploadModal {
+    backdrop-filter: blur(4px);
+}
+
+#avatarUploadModal .modal-content {
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+#avatarPreview {
+    text-align: center;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 2px dashed #d1d5db;
+    transition: all 0.3s ease;
+}
+
+#avatarPreview:hover {
+    border-color: #0ea5e9;
+    background: #f0f9ff;
+}
+
+#previewImage {
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+#previewImage:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* 文件上传区域样式 */
+#avatarFile {
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+    background: #fafafa;
+}
+
+#avatarFile:hover {
+    border-color: #0ea5e9;
+    background: #f0f9ff;
+}
+
+#avatarFile:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+/* 上传按钮样式 */
+button[onclick="uploadAvatar()"] {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    transition: all 0.3s ease;
+    font-weight: 500;
+    letter-spacing: 0.025em;
+}
+
+button[onclick="uploadAvatar()"]:hover {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+}
+
+button[onclick="uploadAvatar()"]:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* 个人信息区域头像样式 */
+.info-item .flex img {
+    transition: all 0.3s ease;
+    border: 2px solid #e5e7eb;
+}
+
+.info-item .flex img:hover {
+    transform: scale(1.1);
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+/* 响应式头像样式 */
+@media (max-width: 768px) {
+    .user-avatar img {
+        width: 4rem;
+        height: 4rem;
+    }
+    
+    .navbar-avatar {
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+    
+    .user-avatar button {
+        padding: 0.5rem 1rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* 响应式设计 */
+@media (max-width: 1024px) {
+    .chapter-list {
+        max-height: 300px;
+    }
+    
+    .stat-value {
+        font-size: 1.25rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .chapter-link {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .chapter-title {
+        margin: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .stat-item {
+        padding: 0.75rem;
+    }
+    
+    .user-avatar i {
+        font-size: 3rem;
+    }
+    
+    .stat-value {
+        font-size: 1.125rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .stat-item {
+        padding: 0.75rem;
+    }
+    
+    .nav-item {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+    
+    .content-section {
+        min-height: 20rem;
+    }
+}

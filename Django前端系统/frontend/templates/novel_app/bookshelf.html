@@ -1,0 +1,1454 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load book_tags %}
+
+{% block title %}我的书架 - 小说阅读系统{% endblock %}
+
+{% block content %}
+<div class="bookshelf-container">
+    <!-- 书架头部 -->
+    <div class="bookshelf-header">
+        <div class="header-content">
+            <div class="header-title">
+                <div class="title-icon">
+                    <i class="fas fa-bookmark"></i>
+                </div>
+                <h1>我的书架</h1>
+            </div>
+            <div class="header-actions">
+                <button class="view-toggle-btn" onclick="toggleViewMode()">
+                    <i class="fas fa-th" id="viewIcon"></i>
+                    <span id="viewText">网格视图</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    {% if books %}
+    <!-- 书架统计 -->
+    <div class="stats-section">
+        <div class="stats-grid">
+            <div class="stat-card clickable" title="已购买的书籍总数" onclick="showBooksModal('purchased')">
+                <div class="stat-icon stat-icon-blue">
+                    <i class="fas fa-book"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ stats.total_books }}</h3>
+                    <p>已拥有</p>
+                </div>
+            </div>
+            <div class="stat-card clickable" title="我收藏的书籍总数" onclick="showBooksModal('collected')">
+                <div class="stat-icon stat-icon-purple">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ stats.collected_count }}</h3>
+                    <p>我的收藏</p>
+                </div>
+            </div>
+            <div class="stat-card clickable" title="书架中的书籍数量" onclick="showBooksModal('reading')">
+                <div class="stat-icon stat-icon-orange">
+                    <i class="fas fa-book-open"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ stats.reading_count }}</h3>
+                    <p>阅读中</p>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+    <!-- 书架内容 -->
+    <div class="bookshelf-content">
+        <!-- 网格视图 -->
+        <div id="gridView">
+            <div class="books-grid">
+                {% for book_info in books %}
+                <div class="book-card">
+                    <a href="{% url 'book_detail' book_info.book.book_id %}" class="book-link">
+                        <div class="book-cover">
+                            {% book_cover_image book_info.book "book-cover-img" %}
+                            
+                            <!-- 阅读进度 -->
+                            <div class="reading-progress">
+                                <div class="progress-bar-bg">
+                                    <div class="progress-bar-fill" style="width: {% widthratio book_info.last_read_chapter book_info.book.chapter_count 100 %}%"></div>
+                                </div>
+                                <span class="progress-text">{% if book_info.last_read_chapter > 0 %}第{{ book_info.last_read_chapter }}章{% else %}未开始{% endif %} / {{ book_info.book.chapter_count }}章</span>
+                            </div>
+                        </div>
+                    </a>
+                    
+                    <div class="book-info">
+                        <h3 class="book-title">{{ book_info.book.title }}</h3>
+                        <p class="book-author">{{ book_info.book.author }}</p>
+                        
+                        <div class="book-meta">
+                            <span class="meta-tag">{{ book_info.book.category }}</span>
+                            <span class="meta-tag">{{ book_info.book.status }}</span>
+                            <span class="meta-tag">
+                                {% if book_info.access_type == 'purchased' %}
+                                    已购买
+                                {% elif book_info.access_type == 'vip_support' %}
+                                    VIP支持作者
+                                {% else %}
+                                    VIP免费
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="book-stats">
+                            <div class="stat-item">
+                                <i class="fas fa-star"></i>
+                                <span>{{ book_info.book.rating|floatformat:1 }}</span>
+                            </div>
+                            <div class="stat-item" title="该书籍被收藏的总次数">
+                                <i class="fas fa-heart"></i>
+                                <span>{{ book_info.book.collection_count }}</span>
+                            </div>
+                            {% if book_info.purchase_price > 0 %}
+                            <div class="stat-item" title="购买价格">
+                                <i class="fas fa-money-bill"></i>
+                                <span>¥{{ book_info.purchase_price }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if book_info.last_read_time %}
+                        <div class="last-read-time">
+                            <i class="fas fa-clock"></i>
+                            <span>{{ book_info.last_read_time|date:"m-d H:i" }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="book-actions">
+                        <a href="/book/{{ book_info.book.book_id }}/chapter/{{ book_info.start_chapter }}/" 
+                           class="action-btn primary-btn">
+                            <i class="fas fa-play"></i>
+                            <span>{% if book_info.last_read_time %}继续阅读{% else %}开始阅读{% endif %}</span>
+                        </a>
+                        <a href="{% url 'book_detail' book_info.book.book_id %}" 
+                           class="action-btn info-btn">
+                            <i class="fas fa-info-circle"></i>
+                            <span>详情</span>
+                        </a>
+                        <button class="action-btn danger-btn" onclick="event.preventDefault(); removeFromBookshelf('{{ book_info.book.book_id }}', '{{ book_info.book.title }}', this)">
+                            <i class="fas fa-trash"></i>
+                            <span>移除</span>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- 列表视图 -->
+        <div id="listView" class="hidden">
+            <div class="books-list">
+                {% for book_info in books %}
+                <div class="book-list-item">
+                    <div class="list-book-cover">
+                        {% book_cover_simple book_info.book as cover_url %}
+                        <img src="{{ cover_url }}" 
+                             class="list-cover-img" 
+                             alt="{{ book_info.book.title }}">
+                    </div>
+                    
+                    <div class="list-book-info">
+                        <h3 class="list-book-title">{{ book_info.book.title }}</h3>
+                        <p class="list-book-author">{{ book_info.book.author }}</p>
+                        
+                        <div class="list-book-meta">
+                            <span class="meta-tag">{{ book_info.book.category }}</span>
+                            <span class="meta-tag">{{ book_info.book.status }}</span>
+                            <span class="meta-tag">{{ book_info.book.chapter_count }}章</span>
+                            <span class="meta-tag">
+                                {% if book_info.access_type == 'purchased' %}
+                                    已购买
+                                {% elif book_info.access_type == 'vip_support' %}
+                                    VIP支持作者
+                                {% else %}
+                                    VIP免费
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="list-reading-progress">
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" style="width: {% widthratio book_info.last_read_chapter book_info.book.chapter_count 100 %}%"></div>
+                            </div>
+                            <span class="progress-text">{% if book_info.last_read_chapter > 0 %}第{{ book_info.last_read_chapter }}章{% else %}未开始{% endif %} / {{ book_info.book.chapter_count }}章</span>
+                        </div>
+                    </div>
+                    
+                    <div class="list-book-actions">
+                        <a href="/book/{{ book_info.book.book_id }}/chapter/{{ book_info.start_chapter }}/" 
+                           class="list-action-btn primary-btn">
+                            <i class="fas fa-play"></i>
+                            <span>{% if book_info.last_read_time %}继续阅读{% else %}开始阅读{% endif %}</span>
+                        </a>
+                        <a href="{% url 'book_detail' book_info.book.book_id %}" 
+                           class="list-action-btn info-btn">
+                            <i class="fas fa-info-circle"></i>
+                            <span>详情</span>
+                        </a>
+                        <button class="list-action-btn danger-btn" onclick="removeFromBookshelf('{{ book_info.book.book_id }}', '{{ book_info.book.title }}', this)">
+                            <i class="fas fa-trash"></i>
+                            <span>移除</span>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <!-- 空书架 -->
+    <div class="empty-bookshelf">
+        <div class="empty-content">
+            <div class="empty-icon">
+                <i class="fas fa-bookmark"></i>
+            </div>
+            <h3>书架空空如也</h3>
+            <p>还没有添加任何书籍到书架</p>
+            <a href="{% url 'book_list' %}" class="empty-action-btn">
+                <i class="fas fa-search"></i>
+                <span>去书城逛逛</span>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 书籍信息模态窗口 -->
+<div id="booksModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">书籍信息</h2>
+            <span class="close" onclick="closeBooksModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div id="booksList" class="books-list">
+                <!-- 书籍列表将在这里动态加载 -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 书架容器 */
+.bookshelf-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    background: #ffffff;
+    min-height: 100vh;
+}
+
+/* 书架头部 */
+.bookshelf-header {
+    margin-bottom: 3rem;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.header-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.title-icon {
+    width: 3rem;
+    height: 3rem;
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.header-title h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+    letter-spacing: -0.025em;
+}
+
+.view-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    color: #4a5568;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.view-toggle-btn:hover {
+    border-color: #6c757d;
+    color: #495057;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.2);
+}
+
+/* 统计区域 */
+.stats-section {
+    margin-bottom: 3rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f7fafc;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card.clickable {
+    cursor: pointer;
+}
+
+.stat-card.clickable:hover {
+    border-color: #007bff;
+}
+
+.stat-icon {
+    width: 4rem;
+    height: 4rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.stat-icon-blue { background: #e3f2fd; color: #1976d2; }
+.stat-icon-green { background: #e8f5e8; color: #388e3c; }
+.stat-icon-purple { background: #f3e5f5; color: #7b1fa2; }
+.stat-icon-orange { background: #fff3e0; color: #f57c00; }
+
+.stat-content h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0 0 0.25rem 0;
+}
+
+.stat-content p {
+    color: #718096;
+    font-size: 0.9rem;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* 书架内容 */
+.bookshelf-content {
+    margin-top: 2rem;
+}
+
+/* 网格视图 */
+.books-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.book-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f7fafc;
+    transition: all 0.3s ease;
+}
+
+.book-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.book-link {
+    display: block;
+    text-decoration: none;
+}
+
+.book-cover {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.book-cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.book-card:hover .book-cover-img {
+    transform: scale(1.05);
+}
+
+.no-cover {
+    height: 100%;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a0aec0;
+    font-size: 3rem;
+}
+
+.reading-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.75rem;
+}
+
+.progress-bar-bg {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    margin-bottom: 0.5rem;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: #6c757d;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.book-info {
+    padding: 1.5rem;
+}
+
+.book-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.book-author {
+    color: #718096;
+    font-size: 0.9rem;
+    margin: 0 0 1rem 0;
+}
+
+.book-meta {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.meta-tag {
+    background: #f7fafc;
+    color: #4a5568;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid #e2e8f0;
+}
+
+.book-stats {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #718096;
+    font-size: 0.85rem;
+}
+
+.stat-item i {
+    color: #f6ad55;
+}
+
+.stat-item:last-child i {
+    color: #fc8181;
+}
+
+.last-read-time {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #a0aec0;
+    font-size: 0.8rem;
+}
+
+.book-actions {
+    padding: 1rem 1.5rem;
+    background: #f7fafc;
+    display: flex;
+    gap: 0.75rem;
+}
+
+.action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.primary-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.primary-btn:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+}
+
+.secondary-btn {
+    background: #007bff;
+    color: white;
+}
+
+.secondary-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+}
+
+.danger-btn {
+    background: #fed7d7;
+    color: #c53030;
+}
+
+.danger-btn:hover {
+    background: #feb2b2;
+    transform: translateY(-2px);
+}
+
+/* 列表视图 */
+.books-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.book-list-item {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+    border: 1px solid #f7fafc;
+    transition: all 0.3s ease;
+}
+
+.book-list-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.list-book-cover {
+    flex-shrink: 0;
+}
+
+.list-cover-img {
+    width: 80px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.no-cover-small {
+    width: 80px;
+    height: 100px;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a0aec0;
+    font-size: 1.5rem;
+}
+
+.list-book-info {
+    flex: 1;
+}
+
+.list-book-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0 0 0.5rem 0;
+}
+
+.list-book-author {
+    color: #718096;
+    font-size: 0.9rem;
+    margin: 0 0 1rem 0;
+}
+
+.list-book-meta {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.list-reading-progress {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.list-reading-progress .progress-bar-bg {
+    flex: 1;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 3px;
+}
+
+.list-reading-progress .progress-bar-fill {
+    height: 100%;
+    background: #6c757d;
+    border-radius: 3px;
+}
+
+.list-book-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.list-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    min-width: 100px;
+    justify-content: center;
+}
+
+.list-action-btn.primary-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.list-action-btn.secondary-btn {
+    background: #007bff;
+    color: white;
+}
+
+.list-action-btn.secondary-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+}
+
+.list-action-btn.info-btn {
+    background: #f7fafc;
+    color: #4a5568;
+    border: 1px solid #e2e8f0;
+}
+
+.list-action-btn.info-btn:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+}
+
+.list-action-btn.danger-btn {
+    background: #fed7d7;
+    color: #c53030;
+}
+
+/* 空书架 */
+.empty-bookshelf {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    padding: 4rem 2rem;
+}
+
+.empty-content {
+    text-align: center;
+    max-width: 400px;
+}
+
+.empty-icon {
+    width: 6rem;
+    height: 6rem;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 2rem;
+    color: #a0aec0;
+    font-size: 2.5rem;
+}
+
+.empty-content h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0 0 1rem 0;
+}
+
+.empty-content p {
+    color: #718096;
+    font-size: 1rem;
+    margin: 0 0 2rem 0;
+}
+
+.empty-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    background: #6c757d;
+    color: white;
+    text-decoration: none;
+    border-radius: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+}
+
+.empty-action-btn:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+}
+
+/* 移除动画 */
+.book-card.removing {
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s ease;
+}
+
+.book-list-item.removing {
+    opacity: 0;
+    transform: translateX(-100%);
+    transition: all 0.3s ease;
+}
+
+/* 统计数字更新动画 */
+.stat-card h3 {
+    transition: all 0.3s ease;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .bookshelf-container {
+        padding: 1rem 0.5rem;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .header-title h1 {
+        font-size: 2rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .books-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+    
+    .book-list-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .list-book-actions {
+        flex-direction: row;
+        justify-content: center;
+    }
+}
+
+/* 模态窗口样式 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background-color: #ffffff;
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 16px;
+    width: 80%;
+    max-width: 800px;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e9ecef;
+    animation: slideIn 0.3s ease;
+}
+
+.modal-header {
+    background: #ffffff;
+    color: #2c3e50;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.close {
+    color: #6c757d;
+    font-size: 2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.close:hover {
+    color: #dc3545;
+    transform: scale(1.1);
+}
+
+.modal-body {
+    padding: 2rem;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.books-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.modal-book-item {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.modal-book-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    border-color: #007bff;
+}
+
+.modal-book-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.modal-book-author {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.modal-book-meta {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.modal-book-tag {
+    background: #f8f9fa;
+    color: #6c757d;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: 1px solid #e9ecef;
+}
+
+.modal-book-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.modal-action-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-action-btn.primary {
+    background: #007bff;
+    color: white;
+}
+
+.modal-action-btn.primary:hover {
+    background: #0056b3;
+}
+
+.modal-action-btn.secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.modal-action-btn.secondary:hover {
+    background: #545b62;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { 
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        margin: 10% auto;
+    }
+    
+    .books-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-book-actions {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let isGridView = true;
+
+/**
+ * 显示书籍信息模态窗口
+ */
+function showBooksModal(type) {
+    const modal = document.getElementById('booksModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const booksList = document.getElementById('booksList');
+    
+    // 设置标题
+    const titles = {
+        'purchased': '已购买的书籍',
+        'collected': '我的收藏',
+        'reading': '阅读中'
+    };
+    modalTitle.textContent = titles[type] || '书籍信息';
+    
+    // 显示加载状态
+    booksList.innerHTML = '<div style="text-align: center; padding: 2rem;"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>';
+    
+    // 显示模态窗口
+    modal.style.display = 'block';
+    
+    // 获取数据
+    fetch(`/api/bookshelf/books/${type}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayBooks(data.books, type);
+            } else {
+                booksList.innerHTML = '<div style="text-align: center; padding: 2rem; color: #6c757d;">暂无数据</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            booksList.innerHTML = '<div style="text-align: center; padding: 2rem; color: #dc3545;">加载失败，请重试</div>';
+        });
+}
+
+/**
+ * 显示书籍列表
+ */
+function displayBooks(books, type) {
+    const booksList = document.getElementById('booksList');
+    
+    if (!books || books.length === 0) {
+        booksList.innerHTML = '<div style="text-align: center; padding: 2rem; color: #6c757d;">暂无数据</div>';
+        return;
+    }
+    
+    let html = '';
+    books.forEach(book => {
+        html += `
+            <div class="modal-book-item">
+                <div class="modal-book-title">${book.title}</div>
+                <div class="modal-book-author">作者：${book.author}</div>
+                <div class="modal-book-meta">
+                    <span class="modal-book-tag">${book.category}</span>
+                    <span class="modal-book-tag">${book.status}</span>
+                    <span class="modal-book-tag">${book.chapter_count}章</span>
+                </div>
+                <div class="modal-book-actions">
+                    <a href="/book/${book.book_id}/" class="modal-action-btn secondary">
+                        <i class="fas fa-info-circle"></i>
+                        详情
+                    </a>
+                    ${type === 'purchased' || type === 'recent_read' || type === 'reading' ? 
+                        `<a href="/book/${book.book_id}/chapter/${book.start_chapter || 1}/" class="modal-action-btn primary">
+                            <i class="fas fa-play"></i>
+                            ${book.last_read_time ? '继续阅读' : '开始阅读'}
+                        </a>` : ''
+                    }
+                </div>
+            </div>
+        `;
+    });
+    
+    booksList.innerHTML = html;
+}
+
+/**
+ * 关闭书籍信息模态窗口
+ */
+function closeBooksModal() {
+    const modal = document.getElementById('booksModal');
+    modal.style.display = 'none';
+}
+
+// 点击模态窗口外部关闭
+window.onclick = function(event) {
+    const modal = document.getElementById('booksModal');
+    if (event.target === modal) {
+        closeBooksModal();
+    }
+}
+
+function toggleViewMode() {
+    const gridView = document.getElementById('gridView');
+    const listView = document.getElementById('listView');
+    const viewIcon = document.getElementById('viewIcon');
+    const viewText = document.getElementById('viewText');
+    
+    if (isGridView) {
+        // 切换到列表视图
+        gridView.classList.add('hidden');
+        listView.classList.remove('hidden');
+        viewIcon.className = 'fas fa-list mr-2';
+        viewText.textContent = '列表视图';
+        isGridView = false;
+    } else {
+        // 切换到网格视图
+        gridView.classList.remove('hidden');
+        listView.classList.add('hidden');
+        viewIcon.className = 'fas fa-th mr-2';
+        viewText.textContent = '网格视图';
+        isGridView = true;
+    }
+}
+
+function removeFromBookshelf(bookId, bookTitle, buttonElement) {
+    if (confirm(`确定要从书架中移除《${bookTitle}》吗？`)) {
+        // 显示加载状态
+        const originalContent = buttonElement.innerHTML;
+        buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>移除中...</span>';
+        buttonElement.disabled = true;
+        
+        // 添加视觉反馈，让用户知道操作正在进行
+        const bookCard = buttonElement.closest('.book-card') || buttonElement.closest('.book-list-item');
+        if (bookCard) {
+            bookCard.style.opacity = '0.6';
+            bookCard.style.transition = 'opacity 0.3s ease';
+        }
+        
+        // 调用API同步服务器数据
+        fetch('/api/remove-from-bookshelf/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                book_id: bookId,
+                book_title: bookTitle
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // 服务器操作成功，显示成功消息
+                showMessage('已从书架移除！', 'success');
+                
+                // 立即更新统计数据（只更新阅读中）
+                updateReadingStatsOnly();
+                
+                // 延迟刷新页面以确保数据完全同步
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else {
+                // 服务器操作失败，恢复按钮状态和视觉状态
+                buttonElement.innerHTML = originalContent;
+                buttonElement.disabled = false;
+                const bookCard = buttonElement.closest('.book-card') || buttonElement.closest('.book-list-item');
+                if (bookCard) {
+                    bookCard.style.opacity = '1';
+                }
+                showMessage(data.message || '移除失败，请重试', 'error');
+            }
+        })
+        .catch(error => {
+            // 网络错误，恢复按钮状态和视觉状态
+            buttonElement.innerHTML = originalContent;
+            buttonElement.disabled = false;
+            const bookCard = buttonElement.closest('.book-card') || buttonElement.closest('.book-list-item');
+            if (bookCard) {
+                bookCard.style.opacity = '1';
+            }
+            showMessage('网络错误，请重试', 'error');
+        });
+    }
+}
+
+function showMessage(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const alertHtml = `
+        <div class="alert ${alertClass} p-4 rounded-lg border-l-4 flex justify-between items-center" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <span>${message}</span>
+            <button type="button" class="text-gray-400 hover:text-gray-600" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    // 直接添加到body
+    document.body.insertAdjacentHTML('beforeend', alertHtml);
+    
+    setTimeout(() => {
+        const alert = document.querySelector('.alert');
+        if (alert) {
+            alert.remove();
+        }
+    }, 3000);
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+/**
+ * 直接通过按钮元素移除书籍卡片
+ */
+function removeBookCardDirect(buttonElement) {
+    // 找到包含该按钮的书籍卡片
+    let bookCard = null;
+    
+    // 检查是否是网格视图的按钮
+    if (buttonElement.classList.contains('action-btn')) {
+        bookCard = buttonElement.closest('.book-card');
+    }
+    // 检查是否是列表视图的按钮
+    else if (buttonElement.classList.contains('list-action-btn')) {
+        bookCard = buttonElement.closest('.book-list-item');
+    }
+    
+    if (bookCard) {
+        bookCard.classList.add('removing');
+        setTimeout(() => {
+            bookCard.remove();
+        }, 300);
+    }
+}
+
+
+/**
+ * 只更新阅读中的统计数据（删除书籍时使用）
+ */
+function updateReadingStatsOnly() {
+    // 只获取阅读中的书籍数据
+    fetch('/api/bookshelf/books/reading/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const statCards = document.querySelectorAll('.stat-card h3');
+                if (statCards.length >= 4) {
+                    // 只更新阅读中数量
+                    statCards[3].textContent = data.books.length;
+                    console.log('阅读中数量更新:', data.books.length);
+                }
+                
+                // 如果阅读中书籍为空，显示空书架提示
+                if (data.books.length === 0) {
+                    setTimeout(() => {
+                        showEmptyBookshelf();
+                    }, 500);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('更新阅读中统计失败:', error);
+        });
+}
+
+/**
+ * 更新书架统计信息
+ */
+function updateBookshelfStats() {
+    // 从服务器获取最新的统计数据
+    Promise.all([
+        fetch('/api/bookshelf/books/purchased/').then(r => r.json()),
+        fetch('/api/bookshelf/books/collected/').then(r => r.json()),
+        fetch('/api/bookshelf/books/reading/').then(r => r.json())
+    ]).then(([purchasedData, collectedData, readingData]) => {
+        const statCards = document.querySelectorAll('.stat-card h3');
+        if (statCards.length >= 3) {
+            // 已购买数量
+            if (purchasedData.success) {
+                statCards[0].textContent = purchasedData.books.length;
+                console.log('已购买数量更新:', purchasedData.books.length);
+            }
+            // 收藏数量
+            if (collectedData.success) {
+                statCards[1].textContent = collectedData.books.length;
+                console.log('收藏数量更新:', collectedData.books.length);
+            }
+            // 阅读中数量
+            if (readingData.success) {
+                statCards[2].textContent = readingData.books.length;
+                console.log('阅读中数量更新:', readingData.books.length);
+            }
+        }
+        
+        // 如果阅读中书籍为空，显示空书架提示
+        if (readingData.success && readingData.books.length === 0) {
+            setTimeout(() => {
+                showEmptyBookshelf();
+            }, 500);
+        }
+    }).catch(error => {
+        console.error('更新统计数据失败:', error);
+    });
+}
+
+/**
+ * 显示空书架提示
+ */
+function showEmptyBookshelf() {
+    const bookshelfContent = document.querySelector('.bookshelf-content');
+    if (bookshelfContent) {
+        const emptyHtml = `
+            <div class="empty-bookshelf">
+                <div class="empty-content">
+                    <div class="empty-icon">
+                        <i class="fas fa-bookmark"></i>
+                    </div>
+                    <h3>书架空空如也</h3>
+                    <p>还没有添加任何书籍到书架</p>
+                    <a href="/books/" class="empty-action-btn">
+                        <i class="fas fa-search"></i>
+                        <span>去书城逛逛</span>
+                    </a>
+                </div>
+            </div>
+        `;
+        bookshelfContent.innerHTML = emptyHtml;
+    }
+}
+
+/**
+ * 快速购买下一章
+ */
+function quickBuyNextChapter(bookTitle, chapterNumber, price) {
+    // 检查用户是否登录
+    if (!document.body.dataset.username) {
+        showMessage('请先登录后再购买', 'error');
+        setTimeout(() => {
+            window.location.href = '/login/';
+        }, 1500);
+        return;
+    }
+    
+    // 检查是否为免费章节
+    if (chapterNumber <= 2) {
+        showMessage('前2章为免费章节，无需购买！', 'info');
+        return;
+    }
+    
+    // 确认购买
+    if (!confirm(`确定要购买《${bookTitle}》第${chapterNumber}章吗？\n价格：${price}元`)) {
+        return;
+    }
+    
+    // 发送添加到购物车请求（使用新的CartItem API）
+    fetch('/api/cart/add/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            book_title: bookTitle,
+            chapter_number: chapterNumber,
+            price: price
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage(data.message, 'success');
+            // 询问是否跳转到购物车
+            setTimeout(() => {
+                if (confirm('章节已添加到购物车，是否前往购物车查看？')) {
+                    window.location.href = '/cart/';
+                }
+            }, 1000);
+        } else {
+            showMessage(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('添加到购物车失败，请重试', 'error');
+    });
+}
+
+// 页面加载完成后启动定期更新机制
+document.addEventListener('DOMContentLoaded', function() {
+    // 立即更新一次统计数据
+    updateBookshelfStats();
+    
+    // 每30秒自动更新一次统计数据
+    setInterval(updateBookshelfStats, 30000);
+    
+    // 监听页面可见性变化，当用户回到页面时立即更新
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            updateBookshelfStats();
+        }
+    });
+});
+</script>
+{% endblock %}
+

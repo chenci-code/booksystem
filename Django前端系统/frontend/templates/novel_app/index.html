@@ -1,0 +1,320 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load book_tags %}
+
+{% block title %}首页 - 小说阅读系统{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- 英雄区域 -->
+    <div class="hero-section mb-12">
+        <div class="text-center">
+            <h1 class="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+                欢迎来到
+                <span class="gradient-text">小说阅读系统</span>
+            </h1>
+            <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+                海量小说资源，精美界面设计，为您提供优质的阅读体验
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{% url 'book_list' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-book-open mr-2"></i>
+                    开始阅读
+                </a>
+                <a href="{% url 'book_list' %}?sort=rating" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-star mr-2"></i>
+                    热门推荐
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 轮换推荐书籍 -->
+    <div class="rotating-books-section mb-12">
+        <div class="flex justify-between items-center mb-8">
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-sync-alt text-2xl text-purple-600"></i>
+                <h2 class="text-3xl font-bold text-gray-900">每日推荐</h2>
+                <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">每次刷新都不同</span>
+            </div>
+            <button onclick="refreshRecommendations()" class="btn btn-outline-primary">
+                <i class="fas fa-refresh mr-2"></i>换一批
+            </button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="rotating-books-grid">
+            {% for book in rotating_books %}
+            <a href="{% url 'book_detail' book.book_id %}" class="card book-card group block">
+                <div class="book-cover">
+                    {% book_cover_image book %}
+                </div>
+                <div class="card-body">
+                    <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">{{ book.title }}</h3>
+                    <p class="text-gray-600 text-sm mb-2">{{ book.author }}</p>
+                    <p class="text-gray-500 text-xs mb-3 line-clamp-2">{{ book.description|truncatechars:100 }}</p>
+                    
+                    <div class="book-meta mb-3">
+                        <span class="badge bg-secondary">{{ book.category }}</span>
+                        <span class="badge bg-info">{{ book.status }}</span>
+                        <span class="badge bg-success">{{ book.chapter_count }}章</span>
+                    </div>
+                    
+                    <div class="book-stats grid grid-cols-3 gap-2 text-center mb-3">
+                        <div class="text-xs text-gray-500">
+                            <i class="fas fa-star text-yellow-400 block mb-1"></i>
+                            {{ book.rating|floatformat:1 }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            <i class="fas fa-heart text-red-400 block mb-1"></i>
+                            {{ book.collection_count }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            <i class="fas fa-book text-blue-600 block mb-1"></i>
+                            {{ book.word_count|default:"未知" }}
+                        </div>
+                    </div>
+                    
+                    {% if book.update_time %}
+                    <div class="text-xs text-gray-500 mb-3">
+                        <i class="fas fa-calendar mr-1"></i> 更新于 {{ book.update_time|date:"Y-m-d" }}
+                    </div>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 热门书籍 -->
+    <div class="popular-books-section mb-12">
+        <div class="flex justify-between items-center mb-8">
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-fire text-2xl text-red-500"></i>
+                <h2 class="text-3xl font-bold text-gray-900">热门书籍</h2>
+            </div>
+            <a href="{% url 'book_list' %}?sort=collection" class="btn btn-outline-primary">
+                查看更多 <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for book in popular_books %}
+            <a href="{% url 'book_detail' book.book_id %}" class="card book-card group block">
+                <div class="book-cover">
+                    {% book_cover_image book %}
+                </div>
+                <div class="card-body">
+                    <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">{{ book.title }}</h3>
+                    <p class="text-gray-600 text-sm mb-2">{{ book.author }}</p>
+                    <p class="text-gray-500 text-xs mb-3 line-clamp-2">{{ book.description|truncatechars:100 }}</p>
+                    
+                    <div class="book-meta mb-3">
+                        <span class="badge bg-secondary">{{ book.category }}</span>
+                        <span class="badge bg-info">{{ book.status }}</span>
+                        <span class="badge bg-success">{{ book.chapter_count }}章</span>
+                    </div>
+                    
+                    <div class="book-stats grid grid-cols-3 gap-2 text-center mb-3">
+                        <div class="text-xs text-gray-500">
+                            <i class="fas fa-star text-yellow-400 block mb-1"></i>
+                            {{ book.rating|floatformat:1 }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            <i class="fas fa-heart text-red-400 block mb-1"></i>
+                            {{ book.collection_count }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            <i class="fas fa-book text-blue-600 block mb-1"></i>
+                            {{ book.word_count|default:"未知" }}
+                        </div>
+                    </div>
+                    
+                    {% if book.update_time %}
+                    <div class="text-xs text-gray-500 mb-3">
+                        <i class="fas fa-calendar mr-1"></i> 更新于 {{ book.update_time|date:"Y-m-d" }}
+                    </div>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 最新更新 -->
+    <div class="latest-books-section mb-12">
+        <div class="flex justify-between items-center mb-8">
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-clock text-2xl text-blue-600"></i>
+                <h2 class="text-3xl font-bold text-gray-900">最新更新</h2>
+            </div>
+            <a href="{% url 'book_list' %}?sort=update_time" class="btn btn-outline-primary">
+                查看更多 <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for book in latest_books %}
+            <a href="{% url 'book_detail' book.book_id %}" class="card book-card group block">
+                <div class="book-cover">
+                    {% book_cover_image book %}
+                </div>
+                <div class="card-body">
+                    <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">{{ book.title }}</h3>
+                    <p class="text-gray-600 text-sm mb-2">{{ book.author }}</p>
+                    <p class="text-gray-500 text-xs mb-3 line-clamp-2">{{ book.description|truncatechars:100 }}</p>
+                    
+                    <div class="book-meta mb-3">
+                        <span class="badge bg-secondary">{{ book.category }}</span>
+                        <span class="badge bg-info">{{ book.status }}</span>
+                        <span class="badge bg-success">{{ book.chapter_count }}章</span>
+                    </div>
+                    
+                    <div class="book-stats grid grid-cols-3 gap-2 text-center mb-3">
+                        <div class="text-xs text-gray-500">
+                            <i class="fas fa-star text-yellow-400 block mb-1"></i>
+                            {{ book.rating|floatformat:1 }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            <i class="fas fa-heart text-red-400 block mb-1"></i>
+                            {{ book.collection_count }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            <i class="fas fa-book text-blue-600 block mb-1"></i>
+                            {{ book.word_count|default:"未知" }}
+                        </div>
+                    </div>
+                    
+                    {% if book.update_time %}
+                    <div class="text-xs text-gray-500 mb-3">
+                        <i class="fas fa-calendar mr-1"></i> 更新于 {{ book.update_time|date:"Y-m-d" }}
+                    </div>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 用户协同推荐 -->
+    {% if collaborative_books %}
+    <div class="collaborative-books-section mb-12">
+        <div class="flex justify-between items-center mb-8">
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-users text-2xl text-green-600"></i>
+                <h2 class="text-3xl font-bold text-gray-900">为你推荐</h2>
+                {% if request.session.username %}
+                <span class="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">基于你的阅读偏好</span>
+                {% else %}
+                <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">热门推荐</span>
+                {% endif %}
+            </div>
+            <a href="{% url 'book_list' %}?sort=collaborative" class="btn btn-outline-primary">
+                查看更多 <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for book in collaborative_books %}
+            <a href="{% url 'book_detail' book.book_id %}" class="card book-card group block">
+                <div class="book-cover">
+                    {% book_cover_image book %}
+                </div>
+                <div class="card-body">
+                    <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">{{ book.title }}</h3>
+                    <p class="text-gray-600 text-sm mb-2">{{ book.author }}</p>
+                    <p class="text-gray-500 text-xs mb-3 line-clamp-2">{{ book.description|truncatechars:100 }}</p>
+                    
+                    <div class="book-meta mb-3">
+                        <span class="badge bg-secondary">{{ book.category }}</span>
+                        <span class="badge bg-info">{{ book.status }}</span>
+                        <span class="badge bg-success">{{ book.chapter_count }}章</span>
+                    </div>
+                    
+                    <div class="book-stats grid grid-cols-3 gap-2 text-center mb-3">
+                        <div class="text-xs text-gray-500">
+                            <i class="fas fa-star text-yellow-400 block mb-1"></i>
+                            {{ book.rating|floatformat:1 }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            <i class="fas fa-heart text-red-400 block mb-1"></i>
+                            {{ book.collection_count }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            <i class="fas fa-book text-blue-600 block mb-1"></i>
+                            {{ book.word_count|default:"未知" }}
+                        </div>
+                    </div>
+                    
+                    {% if book.update_time %}
+                    <div class="text-xs text-gray-500 mb-3">
+                        <i class="fas fa-calendar mr-1"></i> 更新于 {{ book.update_time|date:"Y-m-d" }}
+                    </div>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 高评分推荐 -->
+    <div class="high-rated-books-section">
+        <div class="flex justify-between items-center mb-8">
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-star text-2xl text-yellow-500"></i>
+                <h2 class="text-3xl font-bold text-gray-900">高分好书</h2>
+                <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-full">评分4.0+</span>
+            </div>
+            <a href="{% url 'book_list' %}?sort=rating" class="btn btn-outline-primary">
+                查看更多 <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for book in high_rated_books %}
+            <a href="{% url 'book_detail' book.book_id %}" class="card book-card group block">
+                <div class="book-cover">
+                    {% book_cover_image book %}
+                </div>
+                <div class="card-body">
+                    <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">{{ book.title }}</h3>
+                    <p class="text-gray-600 text-sm mb-2">{{ book.author }}</p>
+                    <p class="text-gray-500 text-xs mb-3 line-clamp-2">{{ book.description|truncatechars:100 }}</p>
+                    
+                    <div class="book-meta mb-3">
+                        <span class="badge bg-secondary">{{ book.category }}</span>
+                        <span class="badge bg-info">{{ book.status }}</span>
+                        <span class="badge bg-success">{{ book.chapter_count }}章</span>
+                    </div>
+                    
+                    <div class="book-stats grid grid-cols-3 gap-2 text-center mb-3">
+                        <div class="text-xs text-gray-500">
+                            <i class="fas fa-star text-yellow-400 block mb-1"></i>
+                            {{ book.rating|floatformat:1 }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            <i class="fas fa-heart text-red-400 block mb-1"></i>
+                            {{ book.collection_count }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            <i class="fas fa-book text-blue-600 block mb-1"></i>
+                            {{ book.word_count|default:"未知" }}
+                        </div>
+                    </div>
+                    
+                    {% if book.update_time %}
+                    <div class="text-xs text-gray-500 mb-3">
+                        <i class="fas fa-calendar mr-1"></i> 更新于 {{ book.update_time|date:"Y-m-d" }}
+                    </div>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/books.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/index.js' %}"></script>
+{% endblock %}
+

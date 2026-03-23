@@ -1,0 +1,691 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}订单管理 - 管理员中心{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- 管理员导航区域 -->
+    <div class="admin-nav-section"
+        style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important; border: 1px solid #e2e8f0 !important; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important; position: relative !important; overflow: hidden !important;">
+        <div class="admin-nav-header"
+            style="border-bottom: 1px solid #e2e8f0 !important; position: relative !important; z-index: 2 !important;">
+            <h1 style="color: #1e293b !important; font-weight: 700 !important;">订单管理</h1>
+            <p style="color: #64748b !important; font-weight: 400 !important;">管理系统中的所有订单信息</p>
+        </div>
+
+        <div class="admin-nav-options" style="position: relative !important; z-index: 2 !important;">
+            <a href="{% url 'admin_dashboard' %}" class="admin-nav-option"
+                style="background: #f8fafc !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; transition: all 0.3s ease !important;">
+                <i class="fas fa-tachometer-alt" style="font-size: 1.1rem !important;"></i>
+                <span style="font-weight: 500 !important;">数据概览</span>
+            </a>
+            <a href="{% url 'admin_books' %}" class="admin-nav-option"
+                style="background: #f8fafc !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; transition: all 0.3s ease !important;">
+                <i class="fas fa-book" style="font-size: 1.1rem !important;"></i>
+                <span style="font-weight: 500 !important;">书籍管理</span>
+            </a>
+            <a href="{% url 'admin_users' %}" class="admin-nav-option"
+                style="background: #f8fafc !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; transition: all 0.3s ease !important;">
+                <i class="fas fa-users" style="font-size: 1.1rem !important;"></i>
+                <span style="font-weight: 500 !important;">用户管理</span>
+            </a>
+            <a href="{% url 'admin_orders' %}" class="admin-nav-option active"
+                style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important; border: 1px solid #3b82f6 !important; color: white !important; transition: all 0.3s ease !important; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2) !important;">
+                <i class="fas fa-shopping-bag" style="font-size: 1.1rem !important;"></i>
+                <span style="font-weight: 500 !important;">订单管理</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 搜索和筛选区域 -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <form method="GET" class="flex flex-wrap gap-4 items-end">
+            <div class="flex-1 min-w-64">
+                <label for="search" class="block text-sm font-medium text-gray-700 mb-2">搜索订单</label>
+                <input type="text" id="search" name="search" value="{{ search_query }}" placeholder="输入订单号或用户名..."
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+
+            <div class="min-w-32">
+                <label for="order_status" class="block text-sm font-medium text-gray-700 mb-2">订单状态</label>
+                <select id="order_status" name="order_status"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">全部状态</option>
+                    {% for status_choice in status_choices %}
+                        <option value="{{ status_choice.0 }}" {% if status_choice.0 == order_status %}selected{% endif %}>{{ status_choice.1 }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="min-w-32">
+                <label for="create_date" class="block text-sm font-medium text-gray-700 mb-2">创建日期</label>
+                <input type="date" id="create_date" name="create_date" value="{{ create_date }}"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    title="按订单创建日期筛选">
+            </div>
+
+            <div class="flex gap-2">
+                <button type="submit"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <i class="fas fa-search mr-2"></i>搜索
+                </button>
+                <a href="{% url 'admin_orders' %}"
+                    class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                    <i class="fas fa-times mr-2"></i>清除
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- 统计信息区域 -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+        <div class="flex justify-between items-center">
+            <div class="text-sm text-gray-600">
+                共找到 <span class="font-semibold text-gray-900">{{ total_orders }}</span> 个订单
+            </div>
+            <div class="flex gap-2">
+                <button onclick="batchUpdateStatus()"
+                    class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    <i class="fas fa-edit mr-2"></i>批量操作
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 订单列表 -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()"
+                                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">订单信息
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">金额/状态
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">创建时间
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for order in page_obj %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="checkbox" name="orderIds" value="{{ order.order_id }}"
+                                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ order.order_number }}</div>
+                            <div class="text-sm text-gray-500">书籍数量: {{ order.chapter_count }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ order.customer_name }}</div>
+                            <div class="text-sm text-gray-500">{{ order.payment_method }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">¥{{ order.order_amount }}</div>
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                                {% if order.order_status == '待支付' %}bg-yellow-100 text-yellow-800
+                                {% elif order.order_status == '已支付' %}bg-blue-100 text-blue-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ order.order_status }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ order.create_time|date:"Y-m-d H:i" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <button data-order-id="{{ order.order_id }}"
+                                    onclick="viewOrderDetail(this.dataset.orderId)"
+                                    class="text-blue-600 hover:text-blue-900">
+                                    <i class="fas fa-eye"></i> 查看
+                                </button>
+                                <button data-order-id="{{ order.order_id }}"
+                                    data-order-status="{{ order.order_status|escapejs }}"
+                                    onclick="updateOrderStatus(this.dataset.orderId, this.dataset.orderStatus)"
+                                    class="text-green-600 hover:text-green-900">
+                                    <i class="fas fa-edit"></i> 修改状态
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                            <i class="fas fa-shopping-bag text-4xl text-gray-300 mb-4"></i>
+                            <div>暂无订单数据</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 分页 -->
+    {% if page_obj.has_other_pages %}
+    <div
+        class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-6 rounded-lg shadow-sm">
+        <div class="flex-1 flex justify-between sm:hidden">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&order_status={{ order_status }}&create_date={{ create_date }}"
+                class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                上一页
+            </a>
+            {% endif %}
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&order_status={{ order_status }}&create_date={{ create_date }}"
+                class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                下一页
+            </a>
+            {% endif %}
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-gray-700">
+                    显示第 <span class="font-medium">{{ page_obj.start_index }}</span> 到
+                    <span class="font-medium">{{ page_obj.end_index }}</span> 条，
+                    共 <span class="font-medium">{{ page_obj.paginator.count }}</span> 条记录
+                </p>
+            </div>
+            <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&order_status={{ order_status }}&create_date={{ create_date }}"
+                        class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <span
+                        class="relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 text-sm font-medium text-blue-600">
+                        {{ num }}
+                    </span>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <a
+                        href="?page={{ num }}&search={{ search_query }}&order_status={{ order_status }}&create_date={{ create_date }}"
+                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        {{ num }}
+                        </a>
+                        {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&order_status={{ order_status }}&create_date={{ create_date }}"
+                            class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        {% endif %}
+                </nav>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 订单详情模态框 -->
+<div id="orderDetailModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">订单详情</h3>
+                <button onclick="closeOrderDetailModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div id="orderDetailContent">
+                <!-- 订单详情内容将通过JavaScript动态填充 -->
+            </div>
+
+            <div class="flex justify-end mt-6">
+                <button onclick="closeOrderDetailModal()"
+                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 更新订单状态模态框 -->
+<div id="updateStatusModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">更新订单状态</h3>
+                <button onclick="closeUpdateStatusModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="updateStatusForm">
+                <input type="hidden" id="updateOrderId" name="order_id">
+                <div class="mb-4">
+                    <p id="currentStatusText" class="text-sm text-gray-600 mb-2">当前状态：-</p>
+                    <label for="newStatus" class="block text-sm font-medium text-gray-700 mb-2">选择新状态</label>
+                    <select id="newStatus" name="status"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        {% for status_choice in status_choices %}
+                        <option value="{{ status_choice.0 }}">{{ status_choice.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeUpdateStatusModal()"
+                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                        取消
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <span id="updateStatusBtnText">更新状态</span>
+                        <i id="updateStatusSpinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 批量操作模态框 -->
+<div id="batchUpdateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">批量更新状态</h3>
+                <button onclick="closeBatchUpdateModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="batchUpdateForm">
+                <div class="mb-4">
+                    <label for="batchStatus" class="block text-sm font-medium text-gray-700 mb-2">新状态</label>
+                    <select id="batchStatus" name="status"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        {% for status_choice in status_choices %}
+                        <option value="{{ status_choice.0 }}">{{ status_choice.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600">已选择 <span id="selectedCount">0</span> 个订单</p>
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeBatchUpdateModal()"
+                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                        取消
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <span id="batchUpdateBtnText">批量更新</span>
+                        <i id="batchUpdateSpinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/admin.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 获取CSRF令牌
+    function getCSRFToken() {
+        const token = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (token) {
+            return token.value;
+        }
+        // 如果找不到CSRF令牌，尝试从cookie获取
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'csrftoken') {
+                return value;
+            }
+        }
+        return '';
+    }
+
+    // 显示消息提示
+    function showMessage(message, type = 'success') {
+        const alertClass = type === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700';
+        const iconClass = type === 'success' ? 'fa-check-circle text-green-400' : 'fa-exclamation-circle text-red-400';
+
+        const alertHtml = `
+        <div class="fixed top-4 right-4 z-50 max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden">
+            <div class="p-4">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas ${iconClass}"></i>
+                    </div>
+                    <div class="ml-3 w-0 flex-1 pt-0.5">
+                        <p class="text-sm font-medium text-gray-900">${message}</p>
+                    </div>
+                    <div class="ml-4 flex-shrink-0 flex">
+                        <button class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+        document.body.insertAdjacentHTML('beforeend', alertHtml);
+
+        // 3秒后自动消失
+        setTimeout(() => {
+            const alert = document.querySelector('.fixed.top-4.right-4');
+            if (alert) {
+                alert.remove();
+            }
+        }, 3000);
+    }
+
+    // 格式化订单内容
+    function formatOrderContent(orderContent, orderContentParsed) {
+        // 优先使用后端解析好的数据
+        let content = orderContentParsed;
+        
+        // 如果没有解析好的数据，尝试自己解析
+        if (!content && orderContent) {
+            try {
+                content = typeof orderContent === 'string' ? JSON.parse(orderContent) : orderContent;
+            } catch (e) {
+                console.error('解析订单内容失败:', e);
+                return `<pre class="text-sm text-gray-900 whitespace-pre-wrap">${escapeHtml(orderContent)}</pre>`;
+            }
+        }
+        
+        if (!content || !Array.isArray(content) || content.length === 0) {
+            return '<p class="text-sm text-gray-500">无详细内容</p>';
+        }
+        
+        // 格式化显示
+        const purchaseTypeMap = {
+            'normal': '普通购买',
+            'vip_support': 'VIP支持作者',
+            'whole_book': '整本购买',
+            'vip_author_support': 'VIP支持作者'
+        };
+        
+        let html = '<div class="space-y-3">';
+        content.forEach((item, index) => {
+            const purchaseType = purchaseTypeMap[item.purchase_type] || item.purchase_type || '普通购买';
+            
+            html += `
+                <div class="border-b border-gray-200 pb-3 ${index === content.length - 1 ? 'border-b-0 pb-0' : ''}">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-900">${escapeHtml(item.book_title || '未知书名')}</p>
+                            <div class="mt-1 space-y-1">
+                                <p class="text-xs text-gray-600">作者：${escapeHtml(item.author || '未知作者')}</p>
+                                <p class="text-xs text-gray-600">书籍ID：${item.book_id || 'N/A'}</p>
+                                <p class="text-xs text-gray-600">购买类型：${escapeHtml(purchaseType)}</p>
+                            </div>
+                        </div>
+                        <div class="text-right ml-4">
+                            <p class="text-sm font-semibold text-gray-900">¥${parseFloat(item.price || 0).toFixed(2)}</p>
+                            <p class="text-xs text-gray-500">数量：${item.quantity || 1}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        return html;
+    }
+    
+    // HTML转义函数
+    function escapeHtml(text) {
+        if (text === null || text === undefined) {
+            return '';
+        }
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // 查看订单详情
+    function viewOrderDetail(orderId) {
+        fetch(`/api/admin/get-order-detail/${orderId}/`, {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const order = data.order;
+                    const detailHtml = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">订单号</label>
+                        <p class="mt-1 text-sm text-gray-900">${order.order_number}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">用户名</label>
+                        <p class="mt-1 text-sm text-gray-900">${order.customer_name}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">订单金额</label>
+                        <p class="mt-1 text-sm text-gray-900">¥${parseFloat(order.order_amount).toFixed(2)}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">支付方式</label>
+                        <p class="mt-1 text-sm text-gray-900">${order.payment_method}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">订单状态</label>
+                        <p class="mt-1 text-sm text-gray-900">${order.order_status}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">书籍数量</label>
+                        <p class="mt-1 text-sm text-gray-900">${order.chapter_count} 本</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">创建时间</label>
+                        <p class="mt-1 text-sm text-gray-900">${order.create_time}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">支付时间</label>
+                        <p class="mt-1 text-sm text-gray-900">${order.payment_time || '未支付'}</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">订单内容</label>
+                    <div class="mt-2 bg-gray-50 rounded-md p-4">
+                        ${formatOrderContent(order.order_content, order.order_content_parsed)}
+                    </div>
+                </div>
+            `;
+                    document.getElementById('orderDetailContent').innerHTML = detailHtml;
+                    document.getElementById('orderDetailModal').classList.remove('hidden');
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('获取订单详情失败', 'error');
+            });
+    }
+
+    // 关闭订单详情模态框
+    function closeOrderDetailModal() {
+        document.getElementById('orderDetailModal').classList.add('hidden');
+    }
+
+    // 更新订单状态
+    function updateOrderStatus(orderId, currentStatus) {
+        document.getElementById('updateOrderId').value = orderId;
+        // 设置当前状态为默认值，但允许用户选择新状态
+        const statusSelect = document.getElementById('newStatus');
+        statusSelect.value = currentStatus;
+        // 显示当前状态信息
+        const currentStatusOption = Array.from(statusSelect.options).find(opt => opt.value === currentStatus);
+        const currentStatusText = currentStatusOption ? currentStatusOption.text : currentStatus;
+        document.getElementById('currentStatusText').textContent = `当前状态：${currentStatusText}`;
+        document.getElementById('updateStatusModal').classList.remove('hidden');
+    }
+
+    // 关闭更新状态模态框
+    function closeUpdateStatusModal() {
+        document.getElementById('updateStatusModal').classList.add('hidden');
+    }
+
+    // 批量更新状态
+    function batchUpdateStatus() {
+        const selectedOrders = document.querySelectorAll('input[name="orderIds"]:checked');
+        if (selectedOrders.length === 0) {
+            showMessage('请先选择要操作的订单', 'error');
+            return;
+        }
+
+        document.getElementById('selectedCount').textContent = selectedOrders.length;
+        document.getElementById('batchUpdateModal').classList.remove('hidden');
+    }
+
+    // 关闭批量更新模态框
+    function closeBatchUpdateModal() {
+        document.getElementById('batchUpdateModal').classList.add('hidden');
+    }
+
+    // 全选/取消全选
+    function toggleSelectAll() {
+        const selectAll = document.getElementById('selectAll');
+        const orderCheckboxes = document.querySelectorAll('input[name="orderIds"]');
+
+        orderCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectAll.checked;
+        });
+    }
+
+    // 更新订单状态表单提交
+    document.getElementById('updateStatusForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData);
+
+        // 显示加载状态
+        document.getElementById('updateStatusBtnText').textContent = '更新中...';
+        document.getElementById('updateStatusSpinner').classList.remove('hidden');
+
+        fetch('/api/admin/update-order-status/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken(),
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('订单状态更新成功');
+                    closeUpdateStatusModal();
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('更新失败，请稍后重试', 'error');
+            })
+            .finally(() => {
+                // 恢复按钮状态
+                document.getElementById('updateStatusBtnText').textContent = '更新状态';
+                document.getElementById('updateStatusSpinner').classList.add('hidden');
+            });
+    });
+
+    // 批量更新状态表单提交
+    document.getElementById('batchUpdateForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const selectedOrders = document.querySelectorAll('input[name="orderIds"]:checked');
+        const orderIds = Array.from(selectedOrders).map(checkbox => parseInt(checkbox.value));
+        const status = document.getElementById('batchStatus').value;
+
+        // 显示加载状态
+        document.getElementById('batchUpdateBtnText').textContent = '更新中...';
+        document.getElementById('batchUpdateSpinner').classList.remove('hidden');
+
+        fetch('/api/admin/batch-update-order-status/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken(),
+            },
+            body: JSON.stringify({
+                order_ids: orderIds,
+                status: status
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(`成功更新 ${data.updated_count} 个订单状态`);
+                    closeBatchUpdateModal();
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('批量更新失败，请稍后重试', 'error');
+            })
+            .finally(() => {
+                // 恢复按钮状态
+                document.getElementById('batchUpdateBtnText').textContent = '批量更新';
+                document.getElementById('batchUpdateSpinner').classList.add('hidden');
+            });
+    });
+
+    // 点击模态框外部关闭
+    document.getElementById('orderDetailModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeOrderDetailModal();
+        }
+    });
+
+    document.getElementById('updateStatusModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeUpdateStatusModal();
+        }
+    });
+
+    document.getElementById('batchUpdateModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeBatchUpdateModal();
+        }
+    });
+</script>
+{% endblock %}

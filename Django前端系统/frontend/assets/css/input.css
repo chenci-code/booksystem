@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 自定义组件样式 */
+@layer components {
+  /* 这些样式会在 Tailwind 构建时包含进来 */
+}
+
+
+

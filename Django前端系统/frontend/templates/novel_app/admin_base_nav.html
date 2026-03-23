@@ -1,0 +1,27 @@
+<!-- 管理员导航区域 - 统一组件 -->
+<div class="admin-nav-section">
+    <div class="admin-nav-header">
+        <h1>{{ page_title }}</h1>
+        <p>{{ page_description }}</p>
+    </div>
+
+    <div class="admin-nav-options">
+        <a href="{% url 'admin_dashboard' %}"
+            class="admin-nav-option{% if current_page == 'dashboard' %} active{% endif %}">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>数据概览</span>
+        </a>
+        <a href="{% url 'admin_books' %}" class="admin-nav-option{% if current_page == 'books' %} active{% endif %}">
+            <i class="fas fa-book"></i>
+            <span>书籍管理</span>
+        </a>
+        <a href="{% url 'admin_users' %}" class="admin-nav-option{% if current_page == 'users' %} active{% endif %}">
+            <i class="fas fa-users"></i>
+            <span>用户管理</span>
+        </a>
+        <a href="{% url 'admin_orders' %}" class="admin-nav-option{% if current_page == 'orders' %} active{% endif %}">
+            <i class="fas fa-shopping-bag"></i>
+            <span>订单管理</span>
+        </a>
+    </div>
+</div>

@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load book_tags %}
+
+{% block title %}书籍列表 - 小说阅读系统{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- 筛选条件区域 -->
+    <div class="filter-section">
+            <!-- 频道筛选 -->
+            <div class="filter-group">
+                <div class="filter-label">频道</div>
+                <div class="filter-options">
+                    <a href="{% url 'book_list' %}{% if search %}?search={{ search }}{% endif %}{% if sort %}?sort={{ sort }}{% endif %}" 
+                       class="filter-option {% if not current_channel %}active{% endif %}">全部</a>
+                    <a href="{% url 'book_list' %}?channel=女生原创{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
+                       class="filter-option {% if current_channel == '女生原创' %}active{% endif %}">女生原创</a>
+                    <a href="{% url 'book_list' %}?channel=男生原创{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
+                       class="filter-option {% if current_channel == '男生原创' %}active{% endif %}">男生原创</a>
+                    <a href="{% url 'book_list' %}?channel=出版图书{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
+                       class="filter-option {% if current_channel == '出版图书' %}active{% endif %}">出版图书</a>
+                </div>
+            </div>
+
+            <!-- 作品分类筛选 -->
+            <div class="filter-group">
+                <div class="filter-label">作品分类</div>
+                <div class="filter-options">
+                    <a href="{% url 'book_list' %}{% if current_channel %}?channel={{ current_channel }}{% endif %}{% if search %}{% if current_channel %}&{% else %}?{% endif %}search={{ search }}{% endif %}{% if sort %}{% if current_channel or search %}&{% else %}?{% endif %}sort={{ sort }}{% endif %}" 
+                       class="filter-option {% if not current_category %}active{% endif %}">全部</a>
+                    {% for category in categories %}
+                    <a href="{% url 'book_list' %}?category={{ category }}{% if current_channel %}&channel={{ current_channel }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
+                       class="filter-option {% if current_category == category %}active{% endif %}">{{ category }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 作品字数筛选 -->
+            <div class="filter-group">
+                <div class="filter-label">作品字数</div>
+                <div class="filter-options">
+                    <a href="{% url 'book_list' %}{% if current_channel %}?channel={{ current_channel }}{% endif %}{% if current_category %}{% if current_channel %}&{% else %}?{% endif %}category={{ current_category }}{% endif %}{% if search %}{% if current_channel or current_category %}&{% else %}?{% endif %}search={{ search }}{% endif %}{% if sort %}{% if current_channel or current_category or search %}&{% else %}?{% endif %}sort={{ sort }}{% endif %}" 
+                       class="filter-option {% if not current_word_count %}active{% endif %}">全部</a>
+                    <a href="{% url 'book_list' %}?word_count=30万以下{% if current_channel %}&channel={{ current_channel }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
+                       class="filter-option {% if current_word_count == '30万以下' %}active{% endif %}">30万以下</a>
+                    <a href="{% url 'book_list' %}?word_count=30万-50万{% if current_channel %}&channel={{ current_channel }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
+                       class="filter-option {% if current_word_count == '30万-50万' %}active{% endif %}">30万-50万</a>
+                    <a href="{% url 'book_list' %}?word_count=50万-100万{% if current_channel %}&channel={{ current_channel }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
+                       class="filter-option {% if current_word_count == '50万-100万' %}active{% endif %}">50万-100万</a>
+                    <a href="{% url 'book_list' %}?word_count=100万-200万{% if current_channel %}&channel={{ current_channel }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
+                       class="filter-option {% if current_word_count == '100万-200万' %}active{% endif %}">100万-200万</a>
+                    <a href="{% url 'book_list' %}?word_count=200万以上{% if current_channel %}&channel={{ current_channel }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
+                       class="filter-option {% if current_word_count == '200万以上' %}active{% endif %}">200万以上</a>
+                </div>
+            </div>
+
+            <!-- 更新时间筛选 -->
+            <div class="filter-group">
+                <div class="filter-label">更新时间</div>
+                <div class="filter-options">
+                    <a href="{% url 'book_list' %}{% if current_channel %}?channel={{ current_channel }}{% endif %}{% if current_category %}{% if current_channel %}&{% else %}?{% endif %}category={{ current_category }}{% endif %}{% if current_word_count %}{% if current_channel or current_category %}&{% else %}?{% endif %}word_count={{ current_word_count }}{% endif %}{% if search %}{% if current_channel or current_category or current_word_count %}&{% else %}?{% endif %}search={{ search }}{% endif %}{% if sort %}{% if current_channel or current_category or current_word_count or search %}&{% else %}?{% endif %}sort={{ sort }}{% endif %}" 
+                       class="filter-option {% if not current_update_time %}active{% endif %}">全部</a>
+                    <a href="{% url 'book_list' %}?update_time=3天内{% if current_channel %}&channel={{ current_channel }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_word_count %}&word_count={{ current_word_count }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
+                       class="filter-option {% if current_update_time == '3天内' %}active{% endif %}">3天内</a>
+                    <a href="{% url 'book_list' %}?update_time=7天内{% if current_channel %}&channel={{ current_channel }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_word_count %}&word_count={{ current_word_count }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
+                       class="filter-option {% if current_update_time == '7天内' %}active{% endif %}">7天内</a>
+                    <a href="{% url 'book_list' %}?update_time=30天内{% if current_channel %}&channel={{ current_channel }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_word_count %}&word_count={{ current_word_count }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
+                       class="filter-option {% if current_update_time == '30天内' %}active{% endif %}">30天内</a>
+                </div>
+            </div>
+
+            <!-- 是否完结筛选 -->
+            <div class="filter-group">
+                <div class="filter-label">是否完结</div>
+                <div class="filter-options">
+                    <a href="{% url 'book_list' %}{% if current_channel %}?channel={{ current_channel }}{% endif %}{% if current_category %}{% if current_channel %}&{% else %}?{% endif %}category={{ current_category }}{% endif %}{% if current_word_count %}{% if current_channel or current_category %}&{% else %}?{% endif %}word_count={{ current_word_count }}{% endif %}{% if current_update_time %}{% if current_channel or current_category or current_word_count %}&{% else %}?{% endif %}update_time={{ current_update_time }}{% endif %}{% if search %}{% if current_channel or current_category or current_word_count or current_update_time %}&{% else %}?{% endif %}search={{ search }}{% endif %}{% if sort %}{% if current_channel or current_category or current_word_count or current_update_time or search %}&{% else %}?{% endif %}sort={{ sort }}{% endif %}" 
+                       class="filter-option {% if not current_status %}active{% endif %}">全部</a>
+                    <a href="{% url 'book_list' %}?status=已完结{% if current_channel %}&channel={{ current_channel }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_word_count %}&word_count={{ current_word_count }}{% endif %}{% if current_update_time %}&update_time={{ current_update_time }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
+                       class="filter-option {% if current_status == '已完结' %}active{% endif %}">已完结</a>
+                    <a href="{% url 'book_list' %}?status=连载中{% if current_channel %}&channel={{ current_channel }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_word_count %}&word_count={{ current_word_count }}{% endif %}{% if current_update_time %}&update_time={{ current_update_time }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
+                       class="filter-option {% if current_status == '连载中' %}active{% endif %}">连载中</a>
+                </div>
+            </div>
+    </div>
+    
+    <!-- 书籍列表 -->
+    <div class="w-full">
+            <!-- 页面标题和统计 -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                    {% if current_category %}
+                        {{ current_category }}
+                    {% elif search %}
+                        搜索结果: "{{ search }}"
+                    {% else %}
+                        全部书籍
+                    {% endif %}
+                </h1>
+                <p class="text-gray-600">共找到 {{ page_obj.paginator.count }} 本书籍</p>
+            </div>
+            
+            <!-- 书籍网格 -->
+            {% if page_obj %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {% for book in page_obj %}
+                <a href="{% url 'book_detail' book.book_id %}" class="card book-card group block">
+                    <div class="book-cover">
+                        {% book_cover_image book %}
+                    </div>
+                    <div class="card-body">
+                        <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">{{ book.title }}</h3>
+                        <p class="text-gray-600 text-sm mb-2">{{ book.author }}</p>
+                        <p class="text-gray-500 text-xs mb-3 line-clamp-2">{{ book.description|truncatechars:100 }}</p>
+                        
+                        <div class="book-meta mb-3">
+                            <span class="badge bg-secondary">{{ book.category }}</span>
+                            <span class="badge bg-info">{{ book.status }}</span>
+                            <span class="badge bg-success">{{ book.chapter_count }}章</span>
+                        </div>
+                        
+                        <div class="book-stats grid grid-cols-3 gap-2 text-center mb-3">
+                            <div class="text-xs text-gray-500">
+                                <i class="fas fa-star text-yellow-400 block mb-1"></i>
+                                {{ book.rating|floatformat:1 }}
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                <i class="fas fa-heart text-red-400 block mb-1"></i>
+                                {{ book.collection_count }}
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                <i class="fas fa-book text-blue-600 block mb-1"></i>
+                                {{ book.word_count|default:"未知" }}
+                            </div>
+                        </div>
+                        
+                        {% if book.update_time %}
+                        <div class="text-xs text-gray-500 mb-3">
+                            <i class="fas fa-calendar mr-1"></i> 更新于 {{ book.update_time|date:"Y-m-d" }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            
+            <!-- 分页 -->
+            {% if page_obj.has_other_pages %}
+            <nav class="mt-12" aria-label="书籍分页">
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                    <a class="page-link" href="?page=1{% if current_channel %}&channel={{ current_channel }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_word_count %}&word_count={{ current_word_count }}{% endif %}{% if current_update_time %}&update_time={{ current_update_time }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_channel %}&channel={{ current_channel }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_word_count %}&word_count={{ current_word_count }}{% endif %}{% if current_update_time %}&update_time={{ current_update_time }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <span class="page-link bg-blue-600 text-white">{{ num }}</span>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <a class="page-link" href="?page={{ num }}{% if current_channel %}&channel={{ current_channel }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_word_count %}&word_count={{ current_word_count }}{% endif %}{% if current_update_time %}&update_time={{ current_update_time }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_channel %}&channel={{ current_channel }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_word_count %}&word_count={{ current_word_count }}{% endif %}{% if current_update_time %}&update_time={{ current_update_time }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_channel %}&channel={{ current_channel }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_word_count %}&word_count={{ current_word_count }}{% endif %}{% if current_update_time %}&update_time={{ current_update_time }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-16">
+                <div class="max-w-md mx-auto">
+                    <i class="fas fa-search text-6xl text-gray-300 mb-6"></i>
+                    <h3 class="text-2xl font-semibold text-gray-900 mb-4">没有找到相关书籍</h3>
+                    <p class="text-gray-600 mb-8">请尝试其他搜索条件或浏览所有书籍</p>
+                    <a href="{% url 'book_list' %}" class="btn btn-primary">
+                        <i class="fas fa-book mr-2"></i> 浏览所有书籍
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 频道和分类的映射关系
+const channelCategoryMapping = {
+    '女生原创': ['现代言情', '古代言情', '幻想言情', '游戏竞技', '衍生言情', '现实主义'],
+    '男生原创': ['历史', '军事', '科幻', '游戏', '玄幻奇幻', '都市', '奇闻异事', '武侠仙侠', '体育', 'N次元', '现实题材'],
+    '出版图书': ['文学艺术', '人文社科', '经管励志', '经典文学', '出版小说', '少儿教育']
+};
+
+// 获取当前频道
+const currentChannel = '{{ current_channel }}';
+
+// 如果当前有选中的频道，隐藏不相关的分类
+if (currentChannel && channelCategoryMapping[currentChannel]) {
+    const allowedCategories = channelCategoryMapping[currentChannel];
+    const categoryOptions = document.querySelectorAll('a[href*="category="]');
+    
+    categoryOptions.forEach(option => {
+        const categoryText = option.textContent.trim();
+        if (categoryText !== '全部' && !allowedCategories.includes(categoryText)) {
+            option.style.display = 'none';
+        } else {
+            option.style.display = 'inline-flex';
+        }
+    });
+}
+</script>
+<script src="{% static 'js/book-list.js' %}"></script>
+{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/books.css' %}" rel="stylesheet">
+<link href="{% static 'css/filters.css' %}" rel="stylesheet">
+{% endblock %}
+

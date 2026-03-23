@@ -1,0 +1,21 @@
+/* 
+ * Tailwind CSS - 请运行构建命令生成完整的 CSS 文件
+ * 
+ * 构建命令:
+ *   Windows: BUILD_TAILWIND.bat
+ *   Linux/Mac: ./BUILD_TAILWIND.sh
+ *   或者: npm run build-css
+ * 
+ * 如果没有运行构建命令，此文件只包含基本样式。
+ * 完整的 Tailwind CSS 需要通过 npm 构建生成。
+ */
+
+/* 基础样式 - 仅作为占位符 */
+* {
+    box-sizing: border-box;
+}
+
+/* 注意: 这是一个占位文件。要获得完整的 Tailwind CSS 功能，请运行构建命令。 */
+
+
+

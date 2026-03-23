@@ -1,0 +1,19 @@
+<!-- 操作按钮区域 - 统一组件 -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+    <div class="flex justify-between items-center">
+        <!-- 统计信息 -->
+        <div class="text-sm text-gray-600">
+            共找到 <span class="font-semibold text-gray-900">{{ total_count }}</span> {{ count_unit|default:"条记录" }}
+        </div>
+        
+        <!-- 操作按钮 -->
+        <div class="flex space-x-2">
+            {% for action in actions %}
+            <button onclick="{{ action.onclick }}"
+                class="px-4 py-2 {{ action.class|default:'bg-blue-600 text-white' }} rounded-md hover:{{ action.hover_class|default:'bg-blue-700' }} focus:outline-none focus:ring-2 focus:ring-{{ action.ring_color|default:'blue' }}-500">
+                <i class="{{ action.icon }} mr-2"></i>{{ action.label }}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+</div>

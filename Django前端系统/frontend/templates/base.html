@@ -1,0 +1,411 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>{% block title %}小说阅读系统{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" href="{% static 'imgs/log.jpg' %}">
+    <link rel="shortcut icon" type="image/jpeg" href="{% static 'imgs/log.jpg' %}">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- 公共CSS -->
+    <link href="{% static 'css/common.css' %}" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+    {% block extra_css_after %}{% endblock %}
+</head>
+<body class="bg-white font-sans antialiased">
+    <!-- 导航栏 -->
+    <nav class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <a href="{% url 'index' %}" class="flex items-center space-x-2 text-gray-900 hover:text-blue-600 transition-colors">
+                        <i class="fas fa-book text-2xl text-blue-600"></i>
+                        <span class="text-xl font-semibold">小说阅读系统</span>
+                    </a>
+                </div>
+                
+                <!-- 桌面端导航 -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <!-- 用户登录后的导航 -->
+                    {% if request.session.username %}
+                        {% if request.session.is_admin %}
+                        <!-- 管理员导航 -->
+                        <a href="{% url 'admin_dashboard' %}" class="flex items-center space-x-1 text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                            <i class="fas fa-tachometer-alt text-sm"></i>
+                            <span>数据统计</span>
+                        </a>
+                        <a href="{% url 'admin_books' %}" class="flex items-center space-x-1 text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                            <i class="fas fa-cog text-sm"></i>
+                            <span>系统管理</span>
+                        </a>
+                        {% else %}
+                        <!-- 基础导航 - 普通用户可见 -->
+                        <a href="{% url 'index' %}" class="flex items-center space-x-1 text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                            <i class="fas fa-home text-sm"></i>
+                            <span>书城</span>
+                        </a>
+                        <a href="{% url 'book_list' %}" class="flex items-center space-x-1 text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                            <i class="fas fa-th-large text-sm"></i>
+                            <span>分类</span>
+                        </a>
+                        <!-- 普通用户导航 -->
+                        <a href="{% url 'bookshelf' %}" class="flex items-center space-x-1 text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                            <i class="fas fa-bookmark text-sm"></i>
+                            <span>我的书架</span>
+                        </a>
+                        <a href="{% url 'shopping_cart' %}" class="flex items-center space-x-1 text-gray-700 hover:text-blue-600 font-medium transition-colors relative">
+                            <i class="fas fa-shopping-cart text-sm"></i>
+                            <span>购物车</span>
+                            {% if request.session.username and not request.session.is_admin %}
+                            <span id="cart-red-dot" class="cart-red-dot" style="display: none;"></span>
+                            {% endif %}
+                        </a>
+                        <a href="{% url 'user_profile' %}" class="flex items-center space-x-1 text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                            <i class="fas fa-user text-sm"></i>
+                            <span>个人中心</span>
+                        </a>
+                        {% endif %}
+                    {% else %}
+                    <!-- 基础导航 - 未登录用户可见 -->
+                    <a href="{% url 'index' %}" class="flex items-center space-x-1 text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                        <i class="fas fa-home text-sm"></i>
+                        <span>书城</span>
+                    </a>
+                    <a href="{% url 'book_list' %}" class="flex items-center space-x-1 text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                        <i class="fas fa-th-large text-sm"></i>
+                        <span>分类</span>
+                    </a>
+                    <!-- 未登录用户的提示导航 -->
+                    <a href="{% url 'login' %}" class="flex items-center space-x-1 text-gray-500 hover:text-blue-600 font-medium transition-colors">
+                        <i class="fas fa-bookmark text-sm"></i>
+                        <span>书架</span>
+                        <i class="fas fa-lock text-xs ml-1"></i>
+                    </a>
+                    {% endif %}
+                </div>
+                
+                <!-- 搜索框 - 仅非管理员用户显示 -->
+                {% if not request.session.is_admin %}
+                <div class="hidden lg:flex items-center">
+                    <form method="GET" action="{% url 'book_list' %}" class="flex items-center">
+                        <div class="relative">
+                            <input type="search" name="search" placeholder="搜索书籍..." 
+                                   value="{{ request.GET.search }}"
+                                   class="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        </div>
+                        <button type="submit" class="ml-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+                
+                <!-- 用户菜单 -->
+                <div class="flex items-center space-x-4">
+                    {% if request.session.username %}
+                    <div class="relative group">
+                        <button class="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors">
+                            {% if request.session.is_admin %}
+                            <i class="fas fa-user-shield text-xl text-red-600"></i>
+                            {% else %}
+                            <!-- 用户头像显示 -->
+                            {% if user_profile and user_profile.avatar %}
+                            <img src="{{ user_profile.avatar.url }}" 
+                                 alt="用户头像" 
+                                 class="w-8 h-8 rounded-full object-cover navbar-avatar">
+                            {% else %}
+                            <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center navbar-avatar">
+                                <i class="fas fa-user text-white text-sm"></i>
+                            </div>
+                            {% endif %}
+                            {% endif %}
+                            <span class="font-medium">
+                                {% if request.session.is_admin %}
+                                    {{ request.session.admin_username }} (管理员)
+                                {% else %}
+                                    {{ request.session.name|default:request.session.username }}
+                                {% endif %}
+                            </span>
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </button>
+                        <div class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            {% if request.session.is_admin %}
+                            <!-- 管理员菜单 -->
+                            <div class="px-4 py-2 border-b border-gray-200">
+                                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider">管理功能</div>
+                            </div>
+                            <a href="{% url 'admin_dashboard' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50">
+                                <i class="fas fa-tachometer-alt text-sm mr-3"></i>
+                                <span>数据统计</span>
+                            </a>
+                            <a href="{% url 'admin_books' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50">
+                                <i class="fas fa-cog text-sm mr-3"></i>
+                                <span>系统管理</span>
+                            </a>
+                            <hr class="border-gray-200">
+                            {% else %}
+                            <!-- 普通用户菜单 -->
+                            <div class="px-4 py-2 border-b border-gray-200">
+                                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider">我的功能</div>
+                            </div>
+                            <a href="{% url 'user_profile' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50">
+                                <i class="fas fa-user text-sm mr-3"></i>
+                                <span>个人中心</span>
+                            </a>
+                            <a href="{% url 'bookshelf' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50">
+                                <i class="fas fa-bookmark text-sm mr-3"></i>
+                                <span>我的书架</span>
+                            </a>
+                            <a href="{% url 'shopping_cart' %}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50">
+                                <i class="fas fa-shopping-cart text-sm mr-3"></i>
+                                <span>购物车</span>
+                            </a>
+                            <hr class="border-gray-200">
+                            {% endif %}
+                            
+                        </div>
+                    </div>
+                    
+                    {% else %}
+                    <a href="{% url 'login' %}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">登录</a>
+                    <a href="{% url 'register' %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">注册</a>
+                    {% endif %}
+                    
+                    <!-- 退出登录按钮 - 最简化实现 -->
+                    {% if request.session.username %}
+                    <a href="{% url 'logout' %}" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors inline-block">
+                        <i class="fas fa-sign-out-alt mr-1"></i>退出登录
+                    </a>
+                    {% endif %}
+                </div>
+                
+                <!-- 移动端菜单按钮 -->
+                <button class="md:hidden p-2 text-gray-700 hover:text-blue-600" onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- 移动端菜单 -->
+            <div id="mobile-menu" class="md:hidden hidden border-t border-gray-200 py-4">
+                <div class="space-y-2">
+                    <!-- 用户功能导航 -->
+                    {% if request.user.is_authenticated or request.session.is_authenticated %}
+                        {% if request.session.is_admin %}
+                        <!-- 管理员导航 -->
+                        <div class="border-t border-gray-200 pt-2 mt-2">
+                            <div class="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">管理功能</div>
+                            <a href="{% url 'admin_dashboard' %}" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
+                                <i class="fas fa-tachometer-alt text-sm"></i>
+                                <span>数据统计</span>
+                            </a>
+                            <a href="{% url 'admin_books' %}" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
+                                <i class="fas fa-cog text-sm"></i>
+                                <span>系统管理</span>
+                            </a>
+                        </div>
+                        {% else %}
+                        <!-- 基础导航 - 普通用户可见 -->
+                        <a href="{% url 'index' %}" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-home text-sm"></i>
+                            <span>书城</span>
+                        </a>
+                        <a href="{% url 'book_list' %}" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-th-large text-sm"></i>
+                            <span>分类</span>
+                        </a>
+                        <!-- 普通用户导航 -->
+                        <div class="border-t border-gray-200 pt-2 mt-2">
+                            <div class="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">我的功能</div>
+                            <a href="{% url 'bookshelf' %}" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
+                                <i class="fas fa-bookmark text-sm"></i>
+                                <span>我的书架</span>
+                            </a>
+                            <a href="{% url 'shopping_cart' %}" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
+                                <i class="fas fa-shopping-cart text-sm"></i>
+                                <span>购物车</span>
+                            </a>
+                            <a href="{% url 'user_profile' %}" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
+                                <i class="fas fa-user text-sm"></i>
+                                <span>个人中心</span>
+                            </a>
+                        </div>
+                        
+                        {% endif %}
+                    {% else %}
+                    <!-- 基础导航 - 未登录用户可见 -->
+                    <a href="{% url 'index' %}" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
+                        <i class="fas fa-home text-sm"></i>
+                        <span>书城</span>
+                    </a>
+                    <a href="{% url 'book_list' %}" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
+                        <i class="fas fa-th-large text-sm"></i>
+                        <span>分类</span>
+                    </a>
+                    <!-- 未登录用户提示 -->
+                    <div class="border-t border-gray-200 pt-2 mt-2">
+                        <div class="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">需要登录</div>
+                        <a href="{% url 'login' %}" class="flex items-center space-x-3 px-4 py-2 text-gray-500 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-bookmark text-sm"></i>
+                            <span>我的书架</span>
+                            <i class="fas fa-lock text-xs ml-auto"></i>
+                        </a>
+                        <a href="{% url 'login' %}" class="flex items-center space-x-3 px-4 py-2 text-gray-500 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-user text-sm"></i>
+                            <span>个人中心</span>
+                            <i class="fas fa-lock text-xs ml-auto"></i>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                <!-- 移动端搜索框 - 仅非管理员用户显示 -->
+                {% if not request.session.is_admin %}
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <form method="GET" action="{% url 'book_list' %}" class="flex">
+                        <input type="search" name="search" placeholder="搜索书籍..." 
+                               value="{{ request.GET.search }}"
+                               class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-r-lg">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- 消息提示 -->
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        {% for message in messages %}
+        <div class="mb-4 p-4 rounded-lg border-l-4 {% if message.tags == 'error' %}bg-red-50 border-red-400 text-red-700{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-400 text-yellow-700{% elif message.tags == 'success' %}bg-green-50 border-green-400 text-green-700{% else %}bg-blue-50 border-blue-400 text-blue-700{% endif %}">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    {% if message.tags == 'error' %}
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    {% elif message.tags == 'warning' %}
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    {% elif message.tags == 'success' %}
+                    <i class="fas fa-check-circle mr-2"></i>
+                    {% else %}
+                    <i class="fas fa-info-circle mr-2"></i>
+                    {% endif %}
+                    <span>{{ message }}</span>
+                </div>
+                <button type="button" class="ml-4 text-gray-400 hover:text-gray-600" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- 主要内容 -->
+    <main class="min-h-screen bg-gray-50">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-gray-200 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fas fa-book text-2xl text-blue-600"></i>
+                        <span class="text-xl font-semibold text-gray-900">小说阅读系统</span>
+                    </div>
+                    <p class="text-gray-600 leading-relaxed">一个功能完善的小说阅读平台，为您提供优质的小说阅读体验。海量图书资源，精美界面设计，让阅读变得更加愉悦。</p>
+                </div>
+                <div>
+                    <h5 class="text-lg font-semibold text-gray-900 mb-4">联系我们</h5>
+                    <div class="space-y-2 text-gray-600">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-envelope text-blue-600"></i>
+                            <span>contact@novelsystem.com</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-phone text-blue-600"></i>
+                            <span>400-123-4567</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr class="border-gray-200 my-8">
+            <div class="text-center text-gray-500">
+                <p>&copy; 2024 小说阅读系统. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 公共JS - 按顺序加载 -->
+    <script src="{% static 'js/config.js' %}"></script>
+    <script src="{% static 'js/utils.js' %}"></script>
+    <script src="{% static 'js/common.js' %}"></script>
+    
+    <!-- 导航菜单控制 -->
+    <script>
+    function toggleMobileMenu() {
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenu.classList.contains('hidden')) {
+            mobileMenu.classList.remove('hidden');
+        } else {
+            mobileMenu.classList.add('hidden');
+        }
+    }
+    
+    // 点击外部关闭移动菜单
+    document.addEventListener('click', function(event) {
+        const mobileMenu = document.getElementById('mobile-menu');
+        const menuButton = event.target.closest('button[onclick="toggleMobileMenu()"]');
+        
+        if (!menuButton && !mobileMenu.contains(event.target)) {
+            mobileMenu.classList.add('hidden');
+        }
+    });
+    
+    // 窗口大小改变时隐藏移动菜单
+    window.addEventListener('resize', function() {
+        if (window.innerWidth >= 768) { // md breakpoint
+            document.getElementById('mobile-menu').classList.add('hidden');
+        }
+    });
+    
+    // 购物车计数更新功能已在common.js中实现
+    // 这里保留向后兼容性
+    if (typeof window.updateCartCount !== 'function') {
+        window.updateCartCount = function() {
+            if (typeof NovelSystemUtils !== 'undefined' && typeof NovelSystemConfig !== 'undefined') {
+                NovelSystemUtils.fetchApi(NovelSystemConfig.API.CART_COUNT)
+                    .then(data => {
+                        const cartRedDot = document.querySelector('#cart-red-dot');
+                        if (cartRedDot) {
+                            cartRedDot.style.display = data.count > 0 ? 'block' : 'none';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching cart count:', error);
+                    });
+            }
+        };
+    }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

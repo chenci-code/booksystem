@@ -1,0 +1,869 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load book_tags %}
+
+{% block title %}书籍管理 - 管理员中心{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- 管理员导航区域 -->
+    <div class="admin-nav-section"
+        style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important; border: 1px solid #e2e8f0 !important; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important; position: relative !important; overflow: hidden !important;">
+        <div class="admin-nav-header"
+            style="border-bottom: 1px solid #e2e8f0 !important; position: relative !important; z-index: 2 !important;">
+            <h1 style="color: #1e293b !important; font-weight: 700 !important;">书籍管理</h1>
+            <p style="color: #64748b !important; font-weight: 400 !important;">管理系统中的所有书籍信息</p>
+        </div>
+
+        <div class="admin-nav-options" style="position: relative !important; z-index: 2 !important;">
+            <a href="{% url 'admin_dashboard' %}" class="admin-nav-option"
+                style="background: #f8fafc !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; transition: all 0.3s ease !important;">
+                <i class="fas fa-tachometer-alt" style="font-size: 1.1rem !important;"></i>
+                <span style="font-weight: 500 !important;">数据概览</span>
+            </a>
+            <a href="{% url 'admin_books' %}" class="admin-nav-option active"
+                style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important; border: 1px solid #3b82f6 !important; color: white !important; transition: all 0.3s ease !important; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2) !important;">
+                <i class="fas fa-book" style="font-size: 1.1rem !important;"></i>
+                <span style="font-weight: 500 !important;">书籍管理</span>
+            </a>
+            <a href="{% url 'admin_users' %}" class="admin-nav-option"
+                style="background: #f8fafc !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; transition: all 0.3s ease !important;">
+                <i class="fas fa-users" style="font-size: 1.1rem !important;"></i>
+                <span style="font-weight: 500 !important;">用户管理</span>
+            </a>
+            <a href="{% url 'admin_orders' %}" class="admin-nav-option"
+                style="background: #f8fafc !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; transition: all 0.3s ease !important;">
+                <i class="fas fa-shopping-bag" style="font-size: 1.1rem !important;"></i>
+                <span style="font-weight: 500 !important;">订单管理</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 筛选条件区域 -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <form method="GET" id="filterForm">
+            <!-- 搜索框 -->
+            <div class="mb-4">
+                <label for="search" class="block text-sm font-medium text-gray-700 mb-2">搜索书籍</label>
+                <input type="text" id="search" name="search" value="{{ search_query }}" placeholder="输入书名、作者或简介..."
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+
+            <!-- 筛选条件行 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <!-- 频道筛选 -->
+                <div>
+                    <label for="channel" class="block text-sm font-medium text-gray-700 mb-2">频道</label>
+                    <select id="channel" name="channel"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        {% for value, label in channel_choices %}
+                        <option value="{{ value }}" {% if value == channel %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- 作品分类筛选 -->
+                <div>
+                    <label for="category" class="block text-sm font-medium text-gray-700 mb-2">作品分类</label>
+                    <select id="category" name="category"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">全部</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat }}" {% if cat == category %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- 更新时间筛选 -->
+                <div>
+                    <label for="update_time" class="block text-sm font-medium text-gray-700 mb-2">更新时间</label>
+                    <select id="update_time" name="update_time"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        {% for value, label in update_time_choices %}
+                        <option value="{{ value }}" {% if value == update_time %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- 是否完结筛选 -->
+                <div>
+                    <label for="is_completed" class="block text-sm font-medium text-gray-700 mb-2">是否完结</label>
+                    <select id="is_completed" name="is_completed"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        {% for value, label in is_completed_choices %}
+                        <option value="{{ value }}" {% if value == is_completed %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="flex gap-2">
+                <button type="submit"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <i class="fas fa-search mr-2"></i>搜索
+                </button>
+                <a href="{% url 'admin_books' %}"
+                    class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                    <i class="fas fa-times mr-2"></i>清除
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- 操作按钮区域 -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+        <div class="flex justify-between items-center">
+            <div class="text-sm text-gray-600">
+                共找到 <span class="font-semibold text-gray-900">{{ total_books }}</span> 本书籍
+            </div>
+            <button onclick="openAddBookModal()"
+                class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                <i class="fas fa-plus mr-2"></i>添加书籍
+            </button>
+        </div>
+    </div>
+
+    <!-- 书籍列表 -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">书籍信息</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">作者</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">分类</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">更新时间</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for book in page_obj %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-12 w-12">
+                                    {% book_cover_simple book as cover_url %}
+                                    <img class="h-12 w-12 rounded object-cover book-cover-img" 
+                                         src="{{ cover_url }}" 
+                                         alt="{{ book.title }}"
+                                         onerror="handleCoverImageError(this);"
+                                         loading="lazy"
+                                         style="background-color: #f3f4f6;">
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ book.title }}</div>
+                                    <div class="text-sm text-gray-500">ID: {{ book.book_id }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ book.author }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ book.category }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                                {% if book.status == '完结' %}bg-green-100 text-green-800
+                                {% elif book.status == '连载中' %}bg-blue-100 text-blue-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ book.status }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if book.update_time %}
+                            {{ book.update_time|date:"Y-m-d H:i" }}
+                            {% else %}
+                            <span class="text-gray-400">未更新</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <button type="button" data-book-id="{{ book.book_id }}" onclick="viewBook({{ book.book_id }})"
+                                    class="text-blue-600 hover:text-blue-900 cursor-pointer">
+                                    <i class="fas fa-eye"></i> 查看
+                                </button>
+                                <button type="button" data-book-id="{{ book.book_id }}" onclick="editBook({{ book.book_id }})"
+                                    class="text-green-600 hover:text-green-900 cursor-pointer">
+                                    <i class="fas fa-edit"></i> 编辑
+                                </button>
+                                <button type="button" data-book-id="{{ book.book_id }}" data-book-title="{{ book.title|escapejs }}"
+                                    onclick="deleteBook({{ book.book_id }}, '{{ book.title|escapejs }}')"
+                                    class="text-red-600 hover:text-red-900 cursor-pointer">
+                                    <i class="fas fa-trash"></i> 删除
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                            <i class="fas fa-book text-4xl text-gray-300 mb-4"></i>
+                            <div>暂无书籍数据</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 分页 -->
+    {% if page_obj.has_other_pages %}
+    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-6 rounded-lg shadow-sm">
+        <div class="flex-1 flex justify-between sm:hidden">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&channel={{ channel }}&category={{ category }}&update_time={{ update_time }}&is_completed={{ is_completed }}"
+                class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                上一页
+            </a>
+            {% endif %}
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&channel={{ channel }}&category={{ category }}&update_time={{ update_time }}&is_completed={{ is_completed }}"
+                class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                下一页
+            </a>
+            {% endif %}
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-gray-700">
+                    显示第 <span class="font-medium">{{ page_obj.start_index }}</span> 到
+                    <span class="font-medium">{{ page_obj.end_index }}</span> 条，
+                    共 <span class="font-medium">{{ page_obj.paginator.count }}</span> 条记录
+                </p>
+            </div>
+            <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&channel={{ channel }}&category={{ category }}&update_time={{ update_time }}&is_completed={{ is_completed }}"
+                        class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <span class="relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 text-sm font-medium text-blue-600">
+                        {{ num }}
+                    </span>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}&search={{ search_query }}&channel={{ channel }}&category={{ category }}&update_time={{ update_time }}&is_completed={{ is_completed }}"
+                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        {{ num }}
+                    </a>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&channel={{ channel }}&category={{ category }}&update_time={{ update_time }}&is_completed={{ is_completed }}"
+                        class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 查看书籍详情模态框 -->
+<div id="viewBookModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">书籍详情</h3>
+                <button onclick="closeViewBookModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="bookDetailContent">
+                <!-- 书籍详情内容将通过JavaScript动态填充 -->
+            </div>
+            <div class="flex justify-end mt-6">
+                <button onclick="closeViewBookModal()"
+                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑书籍模态框 -->
+<div id="editBookModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">编辑书籍</h3>
+                <button onclick="closeEditBookModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="editBookForm">
+                <input type="hidden" id="editBookId" name="book_id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="editBookTitle" class="block text-sm font-medium text-gray-700 mb-2">书名 *</label>
+                        <input type="text" id="editBookTitle" name="title" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="editBookAuthor" class="block text-sm font-medium text-gray-700 mb-2">作者 *</label>
+                        <input type="text" id="editBookAuthor" name="author" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="editBookCategory" class="block text-sm font-medium text-gray-700 mb-2">分类 *</label>
+                        <select id="editBookCategory" name="category" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            {% for cat in categories %}
+                            <option value="{{ cat }}">{{ cat }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="editBookStatus" class="block text-sm font-medium text-gray-700 mb-2">状态 *</label>
+                        <select id="editBookStatus" name="status" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="连载中">连载中</option>
+                            <option value="完结">完结</option>
+                            <option value="暂停">暂停</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="editBookDescription" class="block text-sm font-medium text-gray-700 mb-2">简介</label>
+                        <textarea id="editBookDescription" name="description" rows="4"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label for="editBookCoverUrl" class="block text-sm font-medium text-gray-700 mb-2">封面URL</label>
+                        <input type="url" id="editBookCoverUrl" name="cover_url"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="editBookPrice" class="block text-sm font-medium text-gray-700 mb-2">价格</label>
+                        <input type="number" id="editBookPrice" name="price" step="0.01" min="0"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeEditBookModal()"
+                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                        取消
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <span id="editBookBtnText">保存修改</span>
+                        <i id="editBookSpinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 添加书籍模态框 -->
+<div id="addBookModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">添加新书籍</h3>
+                <button onclick="closeAddBookModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="addBookForm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="addBookTitle" class="block text-sm font-medium text-gray-700 mb-2">书名 *</label>
+                        <input type="text" id="addBookTitle" name="title" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="addBookAuthor" class="block text-sm font-medium text-gray-700 mb-2">作者 *</label>
+                        <input type="text" id="addBookAuthor" name="author" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="addBookCategory" class="block text-sm font-medium text-gray-700 mb-2">分类 *</label>
+                        <select id="addBookCategory" name="category" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            {% for cat in categories %}
+                            <option value="{{ cat }}">{{ cat }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="addBookStatus" class="block text-sm font-medium text-gray-700 mb-2">状态 *</label>
+                        <select id="addBookStatus" name="status" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="连载中">连载中</option>
+                            <option value="完结">完结</option>
+                            <option value="暂停">暂停</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="addBookDescription" class="block text-sm font-medium text-gray-700 mb-2">简介</label>
+                        <textarea id="addBookDescription" name="description" rows="4"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label for="addBookCoverUrl" class="block text-sm font-medium text-gray-700 mb-2">封面URL</label>
+                        <input type="url" id="addBookCoverUrl" name="cover_url"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="addBookPrice" class="block text-sm font-medium text-gray-700 mb-2">价格</label>
+                        <input type="number" id="addBookPrice" name="price" step="0.01" min="0" value="9.99"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeAddBookModal()"
+                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                        取消
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <span id="addBookBtnText">添加书籍</span>
+                        <i id="addBookSpinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/admin.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 默认封面路径
+    const DEFAULT_BOOK_COVER = '{% static "imgs/book.jpg" %}';
+    
+    // 处理封面图片加载失败
+    function handleCoverImageError(img) {
+        if (img.src !== DEFAULT_BOOK_COVER) {
+            img.src = DEFAULT_BOOK_COVER;
+            img.onerror = null; // 防止无限循环
+        }
+    }
+    
+    // 页面加载完成后，为所有封面图片添加错误处理
+    document.addEventListener('DOMContentLoaded', function() {
+        const coverImages = document.querySelectorAll('img[alt*="书籍"], img[alt*="Book"]');
+        coverImages.forEach(function(img) {
+            if (!img.onerror) {
+                img.onerror = function() {
+                    handleCoverImageError(this);
+                };
+            }
+        });
+    });
+    
+    // 获取CSRF令牌
+    function getCSRFToken() {
+        const token = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (token) {
+            return token.value;
+        }
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'csrftoken') {
+                return value;
+            }
+        }
+        return '';
+    }
+
+    // 显示消息提示
+    function showMessage(message, type = 'success') {
+        const alertClass = type === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700';
+        const iconClass = type === 'success' ? 'fa-check-circle text-green-400' : 'fa-exclamation-circle text-red-400';
+
+        const alertHtml = `
+        <div class="fixed top-4 right-4 z-50 max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden">
+            <div class="p-4">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas ${iconClass}"></i>
+                    </div>
+                    <div class="ml-3 w-0 flex-1 pt-0.5">
+                        <p class="text-sm font-medium text-gray-900">${message}</p>
+                    </div>
+                    <div class="ml-4 flex-shrink-0 flex">
+                        <button class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+        document.body.insertAdjacentHTML('beforeend', alertHtml);
+        setTimeout(() => {
+            const alert = document.querySelector('.fixed.top-4.right-4');
+            if (alert) {
+                alert.remove();
+            }
+        }, 3000);
+    }
+
+    // 频道变化时更新分类选项
+    document.getElementById('channel').addEventListener('change', function() {
+        const channel = this.value;
+        const categorySelect = document.getElementById('category');
+        const currentCategory = categorySelect.value;
+        
+        // 频道和分类的映射关系
+        const channelCategoryMapping = JSON.parse('{{ channel_category_mapping|escapejs }}');
+        
+        // 清空当前选项（保留"全部"）
+        categorySelect.innerHTML = '<option value="">全部</option>';
+        
+        if (channel && channelCategoryMapping[channel]) {
+            // 只显示该频道下的分类
+            channelCategoryMapping[channel].forEach(function(cat) {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                if (cat === currentCategory) {
+                    option.selected = true;
+                }
+                categorySelect.appendChild(option);
+            });
+        } else {
+            // 显示所有分类
+            const categories = [
+                {% for cat in categories %}
+                '{{ cat }}'{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ];
+            categories.forEach(function(cat) {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = cat;
+                if (cat === currentCategory) {
+                    opt.selected = true;
+                }
+                categorySelect.appendChild(opt);
+            });
+        }
+    });
+
+    // 查看书籍详情
+    function viewBook(bookId) {
+        console.log('查看书籍，ID:', bookId);
+        if (!bookId) {
+            showMessage('书籍ID无效', 'error');
+            return;
+        }
+        
+        fetch(`/api/admin/books/${bookId}/`, {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+            }
+        })
+            .then(response => {
+                console.log('响应状态:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('响应数据:', data);
+                if (data.success) {
+                    const book = data.data;
+                    const detailHtml = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">书名</label>
+                        <p class="mt-1 text-sm text-gray-900">${escapeHtml(book.title || '')}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">作者</label>
+                        <p class="mt-1 text-sm text-gray-900">${escapeHtml(book.author || '')}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">分类</label>
+                        <p class="mt-1 text-sm text-gray-900">${escapeHtml(book.category || '')}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">状态</label>
+                        <p class="mt-1 text-sm text-gray-900">${escapeHtml(book.status || '')}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">价格</label>
+                        <p class="mt-1 text-sm text-gray-900">¥${parseFloat(book.price || 0).toFixed(2)}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">章节数</label>
+                        <p class="mt-1 text-sm text-gray-900">${book.chapter_count || 0} 章</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">收藏数</label>
+                        <p class="mt-1 text-sm text-gray-900">${book.collection_count || 0}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">评分</label>
+                        <p class="mt-1 text-sm text-gray-900">${book.rating || 0}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">创建时间</label>
+                        <p class="mt-1 text-sm text-gray-900">${book.create_time ? new Date(book.create_time).toLocaleString('zh-CN') : '未知'}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">更新时间</label>
+                        <p class="mt-1 text-sm text-gray-900">${book.update_time ? new Date(book.update_time).toLocaleString('zh-CN') : '未知'}</p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700">简介</label>
+                        <p class="mt-1 text-sm text-gray-900">${escapeHtml(book.description || '暂无简介')}</p>
+                    </div>
+                </div>
+            `;
+                    document.getElementById('bookDetailContent').innerHTML = detailHtml;
+                    document.getElementById('viewBookModal').classList.remove('hidden');
+                } else {
+                    showMessage(data.message || '获取书籍详情失败', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('获取书籍详情失败: ' + error.message, 'error');
+            });
+    }
+    
+    // HTML转义函数
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // 关闭查看书籍模态框
+    function closeViewBookModal() {
+        document.getElementById('viewBookModal').classList.add('hidden');
+    }
+
+    // 编辑书籍
+    function editBook(bookId) {
+        console.log('编辑书籍，ID:', bookId);
+        if (!bookId) {
+            showMessage('书籍ID无效', 'error');
+            return;
+        }
+        
+        fetch(`/api/admin/books/${bookId}/`, {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+            }
+        })
+            .then(response => {
+                console.log('响应状态:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('响应数据:', data);
+                if (data.success) {
+                    const book = data.data;
+                    document.getElementById('editBookId').value = book.book_id;
+                    document.getElementById('editBookTitle').value = book.title || '';
+                    document.getElementById('editBookAuthor').value = book.author || '';
+                    document.getElementById('editBookCategory').value = book.category || '';
+                    document.getElementById('editBookStatus').value = book.status || '连载中';
+                    document.getElementById('editBookDescription').value = book.description || '';
+                    document.getElementById('editBookCoverUrl').value = book.cover_url || '';
+                    document.getElementById('editBookPrice').value = book.price || 9.99;
+
+                    document.getElementById('editBookModal').classList.remove('hidden');
+                } else {
+                    showMessage(data.message || '获取书籍信息失败', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('获取书籍信息失败: ' + error.message, 'error');
+            });
+    }
+
+    // 关闭编辑书籍模态框
+    function closeEditBookModal() {
+        document.getElementById('editBookModal').classList.add('hidden');
+    }
+
+    // 删除书籍
+    function deleteBook(bookId, bookTitle) {
+        console.log('删除书籍，ID:', bookId, '标题:', bookTitle);
+        if (!bookId) {
+            showMessage('书籍ID无效', 'error');
+            return;
+        }
+        
+        if (confirm(`确定要删除书籍"${bookTitle}"吗？此操作不可恢复！`)) {
+            fetch(`/api/admin/books/${bookId}/delete/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCSRFToken(),
+                }
+            })
+                .then(response => {
+                    console.log('响应状态:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('响应数据:', data);
+                    if (data.success) {
+                        showMessage('书籍删除成功');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        showMessage(data.message || '删除失败', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showMessage('删除失败，请稍后重试: ' + error.message, 'error');
+                });
+        }
+    }
+
+    // 打开添加书籍模态框
+    function openAddBookModal() {
+        document.getElementById('addBookModal').classList.remove('hidden');
+        document.getElementById('addBookForm').reset();
+    }
+
+    // 关闭添加书籍模态框
+    function closeAddBookModal() {
+        document.getElementById('addBookModal').classList.add('hidden');
+    }
+
+    // 编辑书籍表单提交
+    document.getElementById('editBookForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData);
+        const bookId = data.book_id;
+
+        // 显示加载状态
+        document.getElementById('editBookBtnText').textContent = '保存中...';
+        document.getElementById('editBookSpinner').classList.remove('hidden');
+
+        fetch(`/api/admin/books/${bookId}/update/`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken(),
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('书籍信息更新成功');
+                    closeEditBookModal();
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    showMessage(data.message || '更新失败', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('更新失败，请稍后重试', 'error');
+            })
+            .finally(() => {
+                document.getElementById('editBookBtnText').textContent = '保存修改';
+                document.getElementById('editBookSpinner').classList.add('hidden');
+            });
+    });
+
+    // 添加书籍表单提交
+    document.getElementById('addBookForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData);
+
+        // 显示加载状态
+        document.getElementById('addBookBtnText').textContent = '添加中...';
+        document.getElementById('addBookSpinner').classList.remove('hidden');
+
+        fetch('/api/admin/books/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken(),
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('书籍添加成功');
+                    closeAddBookModal();
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    showMessage(data.message || '添加失败', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('添加失败，请稍后重试', 'error');
+            })
+            .finally(() => {
+                document.getElementById('addBookBtnText').textContent = '添加书籍';
+                document.getElementById('addBookSpinner').classList.add('hidden');
+            });
+    });
+
+    // 点击模态框外部关闭
+    document.getElementById('viewBookModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeViewBookModal();
+        }
+    });
+
+    document.getElementById('editBookModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeEditBookModal();
+        }
+    });
+
+    document.getElementById('addBookModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeAddBookModal();
+        }
+    });
+    
+    // 确保所有函数在全局作用域中可用
+    window.viewBook = viewBook;
+    window.editBook = editBook;
+    window.deleteBook = deleteBook;
+    window.openAddBookModal = openAddBookModal;
+    window.closeAddBookModal = closeAddBookModal;
+    window.closeViewBookModal = closeViewBookModal;
+    window.closeEditBookModal = closeEditBookModal;
+</script>
+{% endblock %}

@@ -1,0 +1,1977 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load book_tags %}
+
+{% block title %}购物车 - 小说阅读系统{% endblock %}
+
+{% block content %}
+<div class="shopping-cart-container">
+    <div class="cart-header">
+        <div class="cart-title-section">
+            <div class="cart-title-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <h1>购物车</h1>
+        </div>
+        <div class="cart-actions">
+            <button class="action-btn danger-btn" onclick="clearCart()" {% if not chapters %}disabled{% endif %}>
+                <i class="fas fa-trash"></i>
+                <span>清空购物车</span>
+            </button>
+        </div>
+    </div>
+    
+    {% if books %}
+    <!-- 购物车内容 -->
+    <div class="cart-layout">
+        <div class="cart-items-section">
+            <div class="cart-items-card">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-list"></i>
+                    </div>
+                    <h2>购物车商品</h2>
+                    <div class="cart-summary">
+                        <span class="summary-text">共 {{ selected_count }} 本书籍</span>
+                    </div>
+                </div>
+                <div class="section-content">
+                    {% for book_item in books %}
+                    <div class="cart-item" data-item-id="{{ book_item.item_id }}" data-book-id="{{ book_item.book.book_id }}" data-price="{{ book_item.total_price }}">
+                        <div class="cart-item-content">
+                            <div class="item-checkbox-section">
+                                <input class="item-checkbox" type="checkbox"
+                                       value="{{ book_item.item_id }}"
+                                       {% if book_item.is_selected %}checked{% endif %}
+                                       data-action="toggle-selection"
+                                       data-item-id="{{ book_item.item_id }}">
+                            </div>
+                            <div class="item-info-section">
+                                <div class="book-cover-section">
+                                    {% book_cover_simple book_item.book as cover_url %}
+                                    <img src="{{ cover_url }}"
+                                         class="book-cover-image"
+                                         alt="{{ book_item.book.title }}"
+                                         style="width: 60px; height: 90px; object-fit: cover; border-radius: 4px;">
+                                </div>
+                                <div class="item-book-info">
+                                    <h4 class="book-title">{{ book_item.book.title }}</h4>
+                                    <p class="book-author">{{ book_item.book.author }}</p>
+                                    <div class="book-meta-tags">
+                                        <span class="meta-tag">{{ book_item.book.category }}</span>
+                                        <span class="meta-tag">{{ book_item.book.status }}</span>
+                                        <span class="meta-tag">整本书籍</span>
+                                    </div>
+                                </div>
+                                <div class="item-price-info">
+                                    <span class="total-price">¥{{ book_item.total_price|floatformat:2 }}</span>
+                                    <span class="price-label">整本价格</span>
+                                </div>
+                            </div>
+                            <div class="item-actions-section">
+                                <button class="remove-btn" data-action="remove-from-cart" data-item-id="{{ book_item.item_id }}" data-book-id="{{ book_item.book.book_id }}" data-book-title="{{ book_item.book.title|escapejs }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- 订单摘要 -->
+        <div class="order-summary-section">
+            <div class="order-summary-card">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <h2>订单摘要</h2>
+                </div>
+                <div class="section-content">
+                    <div class="summary-items">
+                        <div class="summary-item">
+                            <span class="summary-label">商品数量：</span>
+                            <span class="summary-value" id="totalItems">{{ books|length }} 本书籍</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">购买模式：</span>
+                            <span class="summary-value" id="categoryInfo">整本购买</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">购买状态：</span>
+                            <span class="summary-value status">待支付</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">商品原价：</span>
+                            <span class="summary-value" id="originalAmount">¥{{ original_amount|default:total_amount|floatformat:2 }}</span>
+                        </div>
+                        {% if discount_info.rate < 1.0 %}
+                        <div class="summary-item" id="discountInfo">
+                            <span class="summary-label">优惠折扣：</span>
+                            <span class="summary-value" id="discountText" style="color: #28a745; font-weight: 600;">{{ discount_info.text }} (节省¥{{ discount_info.saved_amount|floatformat:2 }})</span>
+                        </div>
+                        {% else %}
+                        <div class="summary-item" id="discountInfo" style="display: none;">
+                            <span class="summary-label">优惠折扣：</span>
+                            <span class="summary-value" id="discountText" style="color: #28a745; font-weight: 600;"></span>
+                        </div>
+                        {% endif %}
+                        <div class="summary-item">
+                            <span class="summary-label">订单金额：</span>
+                            <span class="summary-value" id="totalAmount" style="font-size: 1.2rem; font-weight: 700; color: #dc3545;">¥{{ total_amount|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                    <div class="summary-divider"></div>
+                    <div class="summary-total">
+                        <span class="total-label">购买状态：</span>
+                        <span class="total-value status">准备购买</span>
+                        </div>
+                        
+                    <div class="checkout-actions">
+                        <button class="checkout-btn" onclick="checkout()">
+                            <i class="fas fa-credit-card"></i>
+                            <span>立即结算</span>
+                            </button>
+                        <a href="{% url 'book_list' %}" class="continue-shopping-btn">
+                            <i class="fas fa-plus"></i>
+                            <span>继续购物</span>
+                            </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 推荐商品 -->
+            <div class="recommended-section">
+                <div class="recommended-card">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <h2>推荐商品</h2>
+                </div>
+                    <div class="section-content">
+                        <div class="recommended-items">
+                            {% if recommended_books %}
+                                {% for book in recommended_books %}
+                                <div class="recommended-item" onclick="viewBook('{{ book.book_id }}')">
+                                    <div class="recommended-cover">
+                                        {% book_cover_image book "w-full h-full" %}
+                                    </div>
+                                    <div class="recommended-info">
+                                        <h4>{{ book.title|truncatechars:12 }}</h4>
+                                        <p>{{ book.author }}</p>
+                                        <span class="recommended-category">{{ book.category }}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="no-recommendations">
+                                    <p class="text-gray-500 text-sm">暂无推荐商品</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <!-- 空购物车 -->
+    <div class="empty-cart">
+        <div class="empty-cart-icon">
+            <i class="fas fa-shopping-cart"></i>
+        </div>
+        <h2>购物车空空如也</h2>
+        <p>还没有添加任何商品到购物车</p>
+        <a href="{% url 'book_list' %}" class="empty-cart-btn">
+            <i class="fas fa-search"></i>
+            <span>去书城逛逛</span>
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 结算确认模态框 -->
+<div id="checkoutModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">确认订单</h3>
+                <button onclick="hideCheckoutModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="order-confirmation">
+                <h6 class="font-semibold mb-3">订单详情</h6>
+                <div id="orderItems" class="mb-4 max-h-64 overflow-y-auto"></div>
+                <hr class="border-gray-200 mb-4">
+                <div class="flex justify-between items-center">
+                    <strong>总计：</strong>
+                    <strong class="text-blue-600 text-lg" id="orderTotal">¥0.00</strong>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="hideCheckoutModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                    取消
+                </button>
+                <button onclick="confirmOrder()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-check mr-2"></i>确认下单
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 购物车页面优化样式 */
+.shopping-cart-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.cart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1.5rem 2rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+}
+
+.cart-title-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.cart-title-icon {
+    width: 50px;
+    height: 50px;
+    background: #007bff;
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.cart-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.cart-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.action-btn i {
+    font-size: 1rem;
+}
+
+.danger-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.danger-btn:hover:not(:disabled) {
+    background: #c82333;
+    transform: translateY(-2px);
+}
+
+.danger-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* 购物车布局 */
+.cart-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.cart-items-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.cart-items-card, .order-summary-card, .recommended-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+}
+
+.section-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.section-icon {
+    width: 40px;
+    height: 40px;
+    background: #007bff;
+    color: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.section-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+    flex: 1;
+}
+
+.section-content {
+    padding: 2rem;
+}
+
+/* 书籍分组样式 */
+.book-group {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.book-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    padding: 1.5rem 2rem;
+}
+
+.book-header-content {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.book-cover-section {
+    width: 80px;
+    height: 100px;
+}
+
+.book-cover-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+}
+
+.book-info-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.book-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.book-author {
+    font-size: 1rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+.book-meta-tags {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.book-actions-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.add-chapters-btn, .remove-book-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.add-chapters-btn {
+    background: #007bff;
+    color: white;
+}
+
+.add-chapters-btn:hover {
+    background: #0056b3;
+    transform: translateY(-1px);
+}
+
+.remove-book-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.remove-book-btn:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+}
+
+.chapters-list {
+    padding: 0 2rem;
+    margin-top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                opacity 0.3s ease, 
+                margin 0.3s ease,
+                padding 0.3s ease;
+    opacity: 0;
+}
+
+.chapters-list:not(.collapsed) {
+    max-height: 3000px;
+    opacity: 1;
+    margin-top: 1rem;
+    padding: 0 2rem 1rem 2rem;
+}
+
+.chapters-list.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 0 2rem;
+}
+
+.book-chapter-count {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.chapter-toggle-icon {
+    margin-left: 0.5rem;
+    transition: transform 0.3s ease;
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.book-header:hover .chapter-toggle-icon {
+    color: #007bff;
+}
+
+.book-header {
+    transition: background-color 0.2s ease;
+    border-radius: 8px;
+}
+
+.book-header:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* 购物车商品项 */
+.cart-item {
+    border-bottom: 1px solid #f1f3f4;
+    padding: 1rem 2rem;
+    transition: all 0.3s ease;
+}
+
+.cart-item:last-child {
+    border-bottom: none;
+}
+
+.cart-item:hover {
+    background: #f8f9fa;
+}
+
+.cart-item-content {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.item-checkbox-section {
+    display: flex;
+    align-items: center;
+}
+
+.item-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: #007bff;
+    cursor: pointer;
+}
+
+.item-cover-section {
+    width: 80px;
+    height: 100px;
+}
+
+.item-cover-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+}
+
+.no-cover-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    font-size: 2rem;
+}
+
+.item-info-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.item-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.item-author {
+    font-size: 0.95rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+.item-chapter-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.chapter-number {
+    font-weight: 600;
+    color: #007bff;
+    font-size: 0.9rem;
+}
+
+.chapter-title {
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.item-meta-tags {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.meta-tag {
+    background: #e9ecef;
+    color: #495057;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.item-quantity-section {
+    display: flex;
+    align-items: center;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.quantity-display {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 600;
+}
+
+.quantity-btn {
+    width: 32px;
+    height: 32px;
+    background: #f8f9fa;
+    border: none;
+    color: #495057;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quantity-btn:hover {
+    background: #e9ecef;
+    color: #007bff;
+}
+
+.quantity-input {
+    width: 50px;
+    height: 32px;
+    border: none;
+    text-align: center;
+    font-weight: 600;
+    color: #2c3e50;
+    background: white;
+}
+
+.item-category-section {
+    text-align: right;
+}
+
+.item-category {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #6f42c1;
+    background: #f8f9fa;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    border: 1px solid #e9ecef;
+}
+
+.item-actions-section {
+    display: flex;
+    align-items: center;
+}
+
+.remove-btn {
+    width: 36px;
+    height: 36px;
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    color: #dc3545;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-btn:hover {
+    background: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+
+/* 订单摘要 */
+.order-summary-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.summary-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.summary-label {
+    color: #6c757d;
+    font-size: 0.95rem;
+}
+
+.summary-value {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.summary-value.status {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.total-value.status {
+    color: #007bff;
+    font-weight: 700;
+}
+
+.summary-divider {
+    height: 1px;
+    background: #e9ecef;
+    margin: 1rem 0;
+}
+
+.summary-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.total-label {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.total-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #007bff;
+}
+
+.checkout-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.checkout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    background: #007bff;
+    color: white;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.checkout-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+    text-decoration: none;
+    color: white;
+}
+
+.continue-shopping-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    color: #6c757d;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.continue-shopping-btn:hover {
+    background: #6c757d;
+    color: white;
+    border-color: #6c757d;
+    text-decoration: none;
+}
+
+/* 推荐商品 */
+.recommended-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.recommended-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.recommended-item:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.recommended-cover {
+    width: 50px;
+    height: 60px;
+    position: relative;
+}
+
+.recommended-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.no-cover-placeholder-small {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    font-size: 1.2rem;
+}
+
+.recommended-info {
+    flex: 1;
+}
+
+.recommended-info h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 0.25rem 0;
+    line-height: 1.3;
+}
+
+.recommended-info p {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin: 0 0 0.25rem 0;
+}
+
+.recommended-category {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #6f42c1;
+    background: #f8f9fa;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    border: 1px solid #e9ecef;
+}
+
+.no-recommendations {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #6c757d;
+}
+
+/* 空购物车 */
+.empty-cart {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+}
+
+.empty-cart-icon {
+    font-size: 4rem;
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+    opacity: 0.5;
+}
+
+.empty-cart h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+}
+
+.empty-cart p {
+    font-size: 1rem;
+    color: #6c757d;
+    margin-bottom: 2rem;
+}
+
+.empty-cart-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    background: #007bff;
+    color: white;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.empty-cart-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+    text-decoration: none;
+    color: white;
+}
+
+/* 章节选择器样式 */
+.chapter-btn {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background: white;
+    color: #495057;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.chapter-btn:hover:not(:disabled) {
+    border-color: #007bff;
+    color: #007bff;
+    transform: translateY(-1px);
+}
+
+.chapter-btn.available {
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.chapter-btn.available:hover {
+    background: #28a745;
+    color: white;
+}
+
+.chapter-btn.selected {
+    background: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.chapter-btn.purchased {
+    background: #6c757d;
+    border-color: #6c757d;
+    color: white;
+    cursor: not-allowed;
+}
+
+.chapter-btn.unavailable {
+    background: #f8f9fa;
+    border-color: #e9ecef;
+    color: #adb5bd;
+    cursor: not-allowed;
+}
+
+.chapter-btn.in-cart {
+    border-color: #ffc107;
+    color: #ffc107;
+    background: #fff3cd;
+    font-weight: 600;
+}
+
+.chapter-btn.in-cart:hover {
+    background: #ffc107;
+    color: white;
+    border-color: #ffc107;
+}
+
+.chapter-btn.in-cart.selected {
+    background: #ffc107;
+    border-color: #ffc107;
+    color: white;
+}
+
+.chapter-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* 书籍价格信息 */
+.item-price-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+}
+
+.total-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #dc3545;
+}
+
+.price-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.chapter-price {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #28a745;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .cart-layout {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .cart-item-content {
+        grid-template-columns: auto 1fr auto;
+        gap: 1rem;
+    }
+    
+    .book-header-content {
+        grid-template-columns: auto 1fr;
+        gap: 1rem;
+    }
+    
+    .book-actions-section {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+    
+    .cart-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .cart-title-section {
+        justify-content: center;
+    }
+    
+    .chapter-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 0.8rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 页面加载时计算总价
+document.addEventListener('DOMContentLoaded', function() {
+    calculateTotal();
+    // 默认折叠所有章节列表
+    document.querySelectorAll('.chapters-list').forEach(list => {
+        list.classList.add('collapsed');
+    });
+});
+
+// 切换章节列表展开/折叠
+function toggleChapterList(bookTitle, bookId) {
+    // 优先使用bookId，如果没有则使用bookTitle
+    let listId, iconId;
+    
+    if (bookId) {
+        listId = 'chapters-' + bookId;
+        iconId = 'toggle-icon-' + bookId;
+    } else {
+        // 如果没有bookId，使用bookTitle生成ID
+        const slugTitle = bookTitle.toLowerCase()
+            .replace(/[^\u4e00-\u9fa5a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+        listId = 'chapters-' + slugTitle;
+        iconId = 'toggle-icon-' + slugTitle;
+    }
+    
+    const chaptersList = document.getElementById(listId);
+    const toggleIcon = document.getElementById(iconId);
+    
+    if (chaptersList) {
+        const isCollapsed = chaptersList.classList.contains('collapsed');
+        
+        if (isCollapsed) {
+            // 展开
+            chaptersList.classList.remove('collapsed');
+            if (toggleIcon) {
+                toggleIcon.classList.remove('fa-chevron-down');
+                toggleIcon.classList.add('fa-chevron-up');
+            }
+        } else {
+            // 折叠
+            chaptersList.classList.add('collapsed');
+            if (toggleIcon) {
+                toggleIcon.classList.remove('fa-chevron-up');
+                toggleIcon.classList.add('fa-chevron-down');
+            }
+        }
+    }
+}
+
+// 计算折扣（按书籍数量）
+function calculateDiscount(bookCount) {
+    if (bookCount >= 20) {
+        return { rate: 0.7, text: '7折（20本及以上）' };
+    } else if (bookCount >= 10) {
+        return { rate: 0.8, text: '8折（10-19本）' };
+    } else if (bookCount >= 5) {
+        return { rate: 0.9, text: '9折（5-9本）' };
+    } else {
+        return { rate: 1.0, text: '无折扣' };
+    }
+}
+
+function calculateTotal() {
+    let totalItems = 0;
+    let totalAmount = 0;
+    
+    // 计算所有选中项目的总数量和原价（数量固定为1，因为是全本购买）
+    document.querySelectorAll('.cart-item').forEach(item => {
+        const checkbox = item.querySelector('.item-checkbox');
+        if (checkbox && checkbox.checked) {
+            // 数量固定为1（全本购买）
+            const quantity = 1;
+            totalItems += quantity;
+            
+            // 获取价格信息 - 优先从data-price属性（总价），其次从total-price文本中获取
+            let price = 0;
+            const dataPrice = item.dataset.price;
+            if (dataPrice) {
+                // data-price存储的是总价
+                price = parseFloat(dataPrice) || 0;
+            } else {
+                // 从total-price文本中提取（格式：¥9.99）
+                const totalPriceText = item.querySelector('.total-price');
+                if (totalPriceText) {
+                    const priceMatch = totalPriceText.textContent.match(/¥([\d.]+)/);
+                    if (priceMatch) {
+                        price = parseFloat(priceMatch[1]) || 0;
+                    }
+                }
+            }
+            
+            totalAmount += price;
+        }
+    });
+    
+    // 应用折扣（按书籍数量，不是章节数）
+    const discount = calculateDiscount(totalItems);
+    const originalAmount = totalAmount;
+    const discountedAmount = totalAmount * discount.rate;
+    const savedAmount = originalAmount - discountedAmount;
+    
+    // 更新显示
+    document.getElementById('totalItems').textContent = totalItems;
+    document.getElementById('originalAmount').textContent = '¥' + originalAmount.toFixed(2);
+    
+    // 显示折扣信息
+    const discountInfo = document.getElementById('discountInfo');
+    const discountText = document.getElementById('discountText');
+    if (discount.rate < 1.0) {
+        discountInfo.style.display = 'flex';
+        discountText.textContent = discount.text + ` (节省¥${savedAmount.toFixed(2)})`;
+    } else {
+        discountInfo.style.display = 'none';
+    }
+    
+    // 更新总价（折扣后）
+    document.getElementById('totalAmount').textContent = '¥' + discountedAmount.toFixed(2);
+    
+    // 更新状态信息
+    if (totalItems > 0) {
+        document.getElementById('categoryInfo').textContent = '单本书籍';
+        document.querySelector('.summary-value.status').textContent = '待购买';
+        document.querySelector('.total-value.status').textContent = '准备购买';
+    } else {
+        document.getElementById('categoryInfo').textContent = '无商品';
+        document.querySelector('.summary-value.status').textContent = '购物车为空';
+        document.querySelector('.total-value.status').textContent = '无商品';
+        document.getElementById('totalAmount').textContent = '¥0.00';
+    }
+}
+
+// 章节选择器相关变量
+let currentBookData = null;
+let selectedChapters = new Set();
+let chapterPrice = 1.0; // 默认章节价格
+
+// 数量相关函数已移除，因为现在是全本购买，数量固定为1
+
+// 显示章节选择器
+function showChapterSelector(bookTitle, bookId) {
+    // 获取书籍信息
+    fetch(`/api/book-info/${bookId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentBookData = data.book;
+                chapterPrice = data.book.chapter_price || 1.0;
+                
+                // 填充书籍信息
+                document.getElementById('selectorBookTitle').textContent = data.book.title;
+                document.getElementById('selectorBookAuthor').textContent = data.book.author;
+                document.getElementById('selectorBookCover').src = data.book.cover_url || '/static/images/default-book-cover.jpg';
+                document.getElementById('totalChapters').textContent = data.book.chapter_count || 0;
+                
+                // 获取购买历史
+                getPurchaseHistory(bookTitle);
+                
+                // 显示模态框
+                document.getElementById('chapterSelectorModal').classList.remove('hidden');
+            } else {
+                showMessage('获取书籍信息失败', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('获取书籍信息失败', 'error');
+        });
+}
+
+// 获取购买历史
+function getPurchaseHistory(bookTitle) {
+    fetch('/api/purchase-history/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            book_title: bookTitle
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const purchasedChapters = data.purchased_chapters || [];
+            const cartChapters = data.cart_chapters || [];
+            const suggestedStart = data.suggested_start_chapter || 3;
+            
+            document.getElementById('purchasedChapters').textContent = purchasedChapters.length;
+            document.getElementById('suggestedStartChapter').textContent = suggestedStart;
+            
+            // 生成章节列表（包括购物车中的章节）
+            generateChaptersList(purchasedChapters, suggestedStart, cartChapters);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// 生成章节列表
+function generateChaptersList(purchasedChapters, suggestedStart, cartChapters = []) {
+    const chaptersList = document.getElementById('chaptersList');
+    chaptersList.innerHTML = '';
+    
+    const totalChapters = currentBookData.chapter_count || 0;
+    const purchasedSet = new Set(purchasedChapters);
+    const cartSet = new Set(cartChapters);
+    
+    // 预选购物车中已存在的章节
+    cartSet.forEach(chapterNum => {
+        if (!purchasedSet.has(chapterNum) && chapterNum >= 3) {
+            selectedChapters.add(chapterNum);
+        }
+    });
+    
+    for (let i = 3; i <= totalChapters; i++) {
+        const chapterBtn = document.createElement('button');
+        chapterBtn.className = 'chapter-btn';
+        chapterBtn.textContent = i;
+        chapterBtn.dataset.chapterNumber = i;
+        
+        if (purchasedSet.has(i)) {
+            chapterBtn.classList.add('purchased');
+            chapterBtn.disabled = true;
+            chapterBtn.title = '已购买';
+        } else if (cartSet.has(i)) {
+            chapterBtn.classList.add('available', 'in-cart');
+            chapterBtn.onclick = () => toggleChapterSelection(i);
+            chapterBtn.title = '已在购物车中';
+            // 标记为已选中
+            selectedChapters.add(i);
+        } else if (i < suggestedStart) {
+            chapterBtn.classList.add('unavailable');
+            chapterBtn.disabled = true;
+            chapterBtn.title = '尚未可购买';
+        } else {
+            chapterBtn.classList.add('available');
+            chapterBtn.onclick = () => toggleChapterSelection(i);
+            chapterBtn.title = '点击选择';
+        }
+        
+        chaptersList.appendChild(chapterBtn);
+    }
+    
+    // 更新选择状态和摘要
+    updateChapterSelection();
+    updateSelectionSummary();
+    updateRemoveButton();
+}
+
+// 切换章节选择
+function toggleChapterSelection(chapterNumber) {
+    if (selectedChapters.has(chapterNumber)) {
+        selectedChapters.delete(chapterNumber);
+    } else {
+        selectedChapters.add(chapterNumber);
+    }
+    
+    updateChapterSelection();
+    updateSelectionSummary();
+    updateRemoveButton();
+}
+
+// 更新移除按钮显示状态
+function updateRemoveButton() {
+    const removeBtn = document.getElementById('removeFromCartBtn');
+    if (!removeBtn) return;
+    
+    // 检查是否有购物车中的章节被选中
+    const hasCartChapters = Array.from(selectedChapters).some(chapterNum => {
+        const btn = document.querySelector(`[data-chapter-number="${chapterNum}"]`);
+        return btn && btn.classList.contains('in-cart');
+    });
+    
+    if (hasCartChapters && selectedChapters.size > 0) {
+        removeBtn.classList.remove('hidden');
+    } else {
+        removeBtn.classList.add('hidden');
+    }
+}
+
+// 更新章节选择状态
+function updateChapterSelection() {
+    document.querySelectorAll('.chapter-btn').forEach(btn => {
+        const chapterNumber = parseInt(btn.dataset.chapterNumber);
+        if (selectedChapters.has(chapterNumber)) {
+            btn.classList.add('selected');
+        } else {
+            btn.classList.remove('selected');
+        }
+    });
+}
+
+// 更新选择摘要
+function updateSelectionSummary() {
+    const selectedCount = selectedChapters.size;
+    const totalPrice = selectedCount * chapterPrice;
+    
+    document.getElementById('selectedCount').textContent = selectedCount;
+    document.getElementById('totalPrice').textContent = '¥' + totalPrice.toFixed(2);
+    updateRemoveButton();
+}
+
+// 全选可用章节
+function selectAllAvailable() {
+    document.querySelectorAll('.chapter-btn.available').forEach(btn => {
+        const chapterNumber = parseInt(btn.dataset.chapterNumber);
+        selectedChapters.add(chapterNumber);
+    });
+    updateChapterSelection();
+    updateSelectionSummary();
+    updateRemoveButton();
+}
+
+// 清空选择
+function clearSelection() {
+    selectedChapters.clear();
+    updateChapterSelection();
+    updateSelectionSummary();
+    updateRemoveButton();
+}
+
+// 应用章节范围
+function applyChapterRange() {
+    const startChapter = parseInt(document.getElementById('startChapter').value);
+    const endChapter = parseInt(document.getElementById('endChapter').value);
+    
+    if (!startChapter || !endChapter || startChapter > endChapter) {
+        showMessage('请输入有效的章节范围', 'error');
+        return;
+    }
+    
+    clearSelection();
+    
+    for (let i = startChapter; i <= endChapter; i++) {
+        const btn = document.querySelector(`[data-chapter-number="${i}"]`);
+        if (btn && btn.classList.contains('available')) {
+            selectedChapters.add(i);
+        }
+    }
+    
+    updateChapterSelection();
+    updateSelectionSummary();
+    updateRemoveButton();
+}
+
+// 添加选中的章节到购物车
+function addSelectedChaptersToCart() {
+    if (selectedChapters.size === 0) {
+        showMessage('请选择要购买的章节', 'error');
+        return;
+    }
+    
+    const chapters = Array.from(selectedChapters).map(chapterNumber => ({
+        chapter_number: chapterNumber,
+        price: chapterPrice
+    }));
+    
+    fetch('/api/bulk-add-to-cart/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            book_title: currentBookData.title,
+            chapters: chapters
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage(data.message, 'success');
+            hideChapterSelectorModal();
+            // 刷新页面以显示新添加的章节
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showMessage(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('添加失败，请重试', 'error');
+    });
+}
+
+// 从购物车移除选中的章节
+function removeSelectedChaptersFromCart() {
+    if (selectedChapters.size === 0) {
+        showMessage('请选择要移除的章节', 'error');
+        return;
+    }
+    
+    // 确认删除
+    if (!confirm(`确定要从购物车中移除选中的 ${selectedChapters.size} 个章节吗？`)) {
+        return;
+    }
+    
+    const chapterNumbers = Array.from(selectedChapters);
+    let removedCount = 0;
+    let errorCount = 0;
+    
+    // 逐个移除章节
+    const removePromises = chapterNumbers.map(chapterNumber => {
+        return fetch('/api/cart/remove/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                book_title: currentBookData.title,
+                chapter_number: chapterNumber
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                removedCount++;
+            } else {
+                errorCount++;
+            }
+        })
+        .catch(error => {
+            console.error('Error removing chapter:', error);
+            errorCount++;
+        });
+    });
+    
+    Promise.all(removePromises).then(() => {
+        if (removedCount > 0) {
+            showMessage(`成功移除 ${removedCount} 个章节${errorCount > 0 ? `，${errorCount} 个失败` : ''}`, 'success');
+            hideChapterSelectorModal();
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showMessage('移除失败，请重试', 'error');
+        }
+    });
+}
+
+// 隐藏章节选择器
+function hideChapterSelectorModal() {
+    document.getElementById('chapterSelectorModal').classList.add('hidden');
+    selectedChapters.clear();
+    currentBookData = null;
+    // 隐藏移除按钮
+    const removeBtn = document.getElementById('removeFromCartBtn');
+    if (removeBtn) {
+        removeBtn.classList.add('hidden');
+    }
+}
+
+// 移除整本书
+function removeBookFromCart(bookTitle) {
+    if (confirm(`确定要从购物车中移除《${bookTitle}》的所有章节吗？`)) {
+        fetch('/api/cart/remove-book/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                book_title: bookTitle
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage(data.message, 'success');
+                // 移除DOM元素
+                const bookGroup = document.querySelector(`[data-book-title="${bookTitle}"]`);
+                if (bookGroup) {
+                    bookGroup.remove();
+                    calculateTotal();
+                    
+                    // 如果购物车为空，刷新页面
+                    if (document.querySelectorAll('.book-group').length === 0) {
+                        setTimeout(() => location.reload(), 1000);
+                    }
+                }
+            } else {
+                showMessage(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('操作失败，请重试', 'error');
+        });
+    }
+}
+
+// 从购物车删除整本书（整本购买模式）
+function removeFromCart(itemId, bookTitle, bookId) {
+    if (confirm(`确定要从购物车中移除《${bookTitle}》吗？`)) {
+        fetch('/api/cart/remove/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                item_id: itemId,
+                book_id: bookId,
+                book_title: bookTitle
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage(data.message, 'success');
+                // 移除DOM元素
+                const item = document.querySelector(`[data-item-id="${itemId}"]`);
+                if (item) {
+                    item.remove();
+                    calculateTotal();
+                    
+                    // 如果购物车为空，刷新页面
+                    if (document.querySelectorAll('.cart-item').length === 0) {
+                        setTimeout(() => location.reload(), 1000);
+                    }
+                } else {
+                    // 如果找不到元素，直接刷新页面
+                    setTimeout(() => location.reload(), 1000);
+                }
+            } else {
+                showMessage(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('操作失败，请重试', 'error');
+        });
+    }
+}
+
+function clearCart() {
+    if (confirm('确定要清空购物车吗？')) {
+        fetch('/api/cart/clear/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage(data.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showMessage(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('操作失败，请重试', 'error');
+        });
+    }
+}
+
+// 更新订单详情
+function updateOrderDetails(totalAmount) {
+    const selectedItems = [];
+    let totalChapters = 0;
+    const booksMap = {};
+    
+    document.querySelectorAll('.cart-item').forEach(item => {
+        const checkbox = item.querySelector('.item-checkbox');
+        if (checkbox && checkbox.checked) {
+            const itemId = item.dataset.itemId;
+            const bookId = item.dataset.bookId;
+            // 数量固定为1（全本购买）
+            const quantity = 1;
+            // 获取价格 - 从data-price或total-price中获取
+            let price = 0;
+            const dataPrice = item.dataset.price;
+            if (dataPrice) {
+                price = parseFloat(dataPrice) || 0;
+            } else {
+                const totalPriceText = item.querySelector('.total-price');
+                if (totalPriceText) {
+                    const priceMatch = totalPriceText.textContent.match(/¥([\d.]+)/);
+                    if (priceMatch) {
+                        price = parseFloat(priceMatch[1]) || 0;
+                    }
+                }
+            }
+            
+            totalChapters += quantity;
+            
+            // 获取书籍标题
+            const bookTitleElement = item.querySelector('.book-title');
+            const bookTitle = bookTitleElement ? bookTitleElement.textContent.trim() : '';
+            
+            if (bookTitle && !booksMap[bookTitle]) {
+                booksMap[bookTitle] = [];
+            }
+            if (bookTitle) {
+                booksMap[bookTitle].push({
+                    quantity: quantity,
+                    price: price
+                });
+            }
+            
+            selectedItems.push({
+                item_id: itemId,
+                book_id: bookId,
+                quantity: quantity,
+                price: price
+            });
+        }
+    });
+    
+    // 计算折扣（按书籍数量，不是章节数）
+    const bookCount = Object.keys(booksMap).length;
+    const discount = calculateDiscount(bookCount);
+    const originalAmount = selectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const discountedAmount = originalAmount * discount.rate;
+    const savedAmount = originalAmount - discountedAmount;
+    
+    // 显示订单详情
+    const orderItems = document.getElementById('orderItems');
+    let itemsHtml = '';
+    
+    // 按书籍显示（整本购买模式）
+    for (const [bookTitle, books] of Object.entries(booksMap)) {
+        itemsHtml += `<div class="mb-3 p-2 bg-gray-50 rounded">`;
+        itemsHtml += `<div class="flex justify-between items-center">`;
+        itemsHtml += `<div class="flex-1">`;
+        itemsHtml += `<div class="font-semibold mb-1 text-gray-800">${bookTitle}</div>`;
+        // 计算该书籍的总价
+        const bookTotal = books.reduce((sum, book) => sum + (book.price * book.quantity), 0);
+        itemsHtml += `<div class="text-sm text-gray-600">整本购买</div>`;
+        itemsHtml += `</div>`;
+        itemsHtml += `<div class="font-semibold text-gray-800">¥${bookTotal.toFixed(2)}</div>`;
+        itemsHtml += `</div>`;
+        itemsHtml += `</div>`;
+    }
+    
+    // 显示折扣信息
+    if (discount.rate < 1.0) {
+        itemsHtml += `<div class="mt-3 pt-3 border-t border-gray-200">`;
+        itemsHtml += `<div class="flex justify-between text-sm mb-1">`;
+        itemsHtml += `<span>商品原价：</span>`;
+        itemsHtml += `<span>¥${originalAmount.toFixed(2)}</span>`;
+        itemsHtml += `</div>`;
+        itemsHtml += `<div class="flex justify-between text-sm mb-1" style="color: #28a745;">`;
+        itemsHtml += `<span>${discount.text}：</span>`;
+        itemsHtml += `<span>-¥${savedAmount.toFixed(2)}</span>`;
+        itemsHtml += `</div>`;
+        itemsHtml += `</div>`;
+    }
+    
+    orderItems.innerHTML = itemsHtml;
+    document.getElementById('orderTotal').textContent = '¥' + discountedAmount.toFixed(2);
+}
+
+function checkout() {
+    // 计算当前总价（包含折扣）
+    calculateTotal();
+    
+    // 获取折扣后的总价
+    const totalAmountText = document.getElementById('totalAmount').textContent;
+    const totalAmount = parseFloat(totalAmountText.replace('¥', '')) || 0;
+    
+    if (totalAmount <= 0) {
+        showMessage('购物车为空，无法结算', 'error');
+        return;
+    }
+    
+    // 检查是否有选中的商品
+    const selectedItems = [];
+    document.querySelectorAll('.cart-item').forEach(item => {
+        const checkbox = item.querySelector('.item-checkbox');
+        if (checkbox && checkbox.checked) {
+            selectedItems.push(item);
+        }
+    });
+    
+    if (selectedItems.length === 0) {
+        showMessage('请选择要购买的商品', 'error');
+        return;
+    }
+    
+    // 显示结算确认模态框
+    document.getElementById('checkoutModal').classList.remove('hidden');
+    
+    // 更新订单详情
+    updateOrderDetails(totalAmount);
+}
+
+function hideCheckoutModal() {
+    document.getElementById('checkoutModal').classList.add('hidden');
+}
+
+function confirmOrder() {
+    // 直接调用购买API，使用重构后的整本购买流程
+    fetch('/api/purchase-from-cart/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage(data.message, 'success');
+            hideCheckoutModal();
+            
+            // 显示购买详情
+            if (data.purchased_books && data.purchased_books.length > 0) {
+                setTimeout(() => {
+                    alert(`购买成功！\n已购买书籍：${data.purchased_books.join('、')}\n订单号：${data.order_number}\n实付金额：¥${data.final_amount.toFixed(2)}`);
+                }, 1000);
+            }
+            
+            // 刷新购物车页面
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showMessage(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('下单失败，请重试', 'error');
+    });
+}
+
+function showMessage(message, type) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transition-all duration-300 ${
+        type === 'success' ? 'bg-green-500 text-white' : 
+        type === 'error' ? 'bg-red-500 text-white' : 
+        type === 'info' ? 'bg-blue-500 text-white' :
+        'bg-gray-500 text-white'
+    }`;
+    messageDiv.textContent = message;
+    
+    document.body.appendChild(messageDiv);
+    
+    // 3秒后自动移除
+    setTimeout(() => {
+        messageDiv.remove();
+    }, 3000);
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 添加全选/取消全选功能
+function toggleAllItems(checked) {
+    document.querySelectorAll('.item-checkbox').forEach(checkbox => {
+        checkbox.checked = checked;
+    });
+    calculateTotal();
+}
+
+// 切换商品选中状态
+function toggleItemSelection(itemId, isSelected) {
+    // 更新服务器端状态
+    fetch('/api/cart/update/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            item_id: itemId,
+            is_selected: isSelected
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 重新计算总价
+            calculateTotal();
+        } else {
+            // 如果更新失败，恢复复选框状态
+            const checkbox = document.querySelector(`input[value="${itemId}"]`);
+            if (checkbox) {
+                checkbox.checked = !isSelected;
+            }
+            showMessage(data.message || '更新失败', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // 恢复复选框状态
+        const checkbox = document.querySelector(`input[value="${itemId}"]`);
+        if (checkbox) {
+            checkbox.checked = !isSelected;
+        }
+        showMessage('网络错误，请重试', 'error');
+    });
+}
+
+// 添加商品选择变化监听
+document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('item-checkbox')) {
+        calculateTotal();
+    }
+});
+
+// 添加删除按钮点击事件监听
+document.addEventListener('click', function(e) {
+    // 检查是否点击了删除按钮
+    const removeBtn = e.target.closest('[data-action="remove-from-cart"]');
+    if (removeBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const itemId = removeBtn.dataset.itemId;
+        const bookId = removeBtn.dataset.bookId;
+        const bookTitle = removeBtn.dataset.bookTitle || '该书籍';
+        
+        // 调用删除函数
+        if (itemId && bookId) {
+            removeFromCart(itemId, bookTitle, bookId);
+        } else {
+            showMessage('删除失败：缺少必要参数', 'error');
+        }
+    }
+});
+
+// 查看推荐书籍详情
+function viewBook(bookId) {
+    window.location.href = `/book/${bookId}/`;
+}
+</script>
+{% endblock %}
+

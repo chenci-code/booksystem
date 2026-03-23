@@ -1,0 +1,4868 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load book_tags %}
+
+{% block title %}{{ book.title }} - 小说阅读系统{% endblock %}
+
+{% block content %}
+<div class="book-detail-container">
+    <div class="book-detail-layout">
+        <!-- 书籍信息 -->
+        <div class="book-info-section">
+            <div class="book-info-card">
+                <div class="book-cover-container">
+                    {% book_cover_image book "book-cover-image" %}
+                </div>
+                
+                <div class="book-basic-info">
+                    <h1 class="book-title">{{ book.title }}</h1>
+                    <p class="book-author">{{ book.author }}</p>
+                    
+                    <div class="book-meta-tags">
+                        <span class="meta-tag">{{ book.category }}</span>
+                        <span class="meta-tag">{{ book.status }}</span>
+                        <span class="meta-tag">{{ book.chapter_count }}章</span>
+                    </div>
+                    
+                    <div class="book-stats-grid">
+                        <div class="stat-item">
+                            <i class="fas fa-star"></i>
+                            <span class="stat-value">{{ book.rating|floatformat:1 }}</span>
+                            <span class="stat-label">评分</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-heart"></i>
+                            <span class="stat-value">{{ book.collection_count }}</span>
+                            <span class="stat-label">收藏</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-list"></i>
+                            <span class="stat-value">{{ book.chapter_count }}章</span>
+                            <span class="stat-label">目录数</span>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        {% if request.session.username %}
+                        <button class="action-btn primary-btn" onclick="startReading()">
+                            <i class="fas fa-book-open"></i>
+                            <span>开始阅读</span>
+                        </button>
+                        
+                        <button class="action-btn warning-btn" onclick="crawlChapters()" id="crawlBtn">
+                            <i class="fas fa-download"></i>
+                            <span id="crawlText">爬取章节内容</span>
+                        </button>
+                        
+                        <div class="action-buttons-row">
+                        <button class="action-btn {% if is_in_bookshelf %}success-btn{% else %}outline-btn{% endif %}" 
+                                onclick="toggleBookshelf()" 
+                                id="bookshelfBtn">
+                            <i class="fas fa-bookmark"></i>
+                            <span id="bookshelfText">{% if is_in_bookshelf %}已加入{% else %}加入书架{% endif %}</span>
+                        </button>
+                        <button class="action-btn {% if is_collected %}danger-btn{% else %}outline-btn{% endif %}" 
+                                onclick="toggleCollection()" 
+                                id="collectBtn">
+                            <i class="fas fa-heart"></i>
+                            <span id="collectText">{% if is_collected %}已收藏{% else %}收藏{% endif %}</span>
+                        </button>
+                        </div>
+                        {% else %}
+                        <a href="{% url 'login' %}" class="action-btn primary-btn">
+                            <i class="fas fa-sign-in-alt"></i>
+                            <span>登录后阅读</span>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 书籍详情 -->
+        <div class="book-details-section">
+            <!-- 基本信息 -->
+            <div class="detail-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <h2>书籍信息</h2>
+                </div>
+                <div class="section-content">
+                    <div class="info-grid">
+                        <div class="info-column">
+                            <div class="info-item">
+                                <span class="info-label">书名：</span>
+                                <span class="info-value">{{ book.title }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">作者：</span>
+                                <span class="info-value">{{ book.author }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">分类：</span>
+                                <span class="info-value">{{ book.category }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">状态：</span>
+                                <span class="info-value">{{ book.status }}</span>
+                            </div>
+                        </div>
+                        <div class="info-column">
+                            <div class="info-item">
+                                <span class="info-label">章节数：</span>
+                                <span class="info-value">{{ book.chapter_count }}章</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">字数：</span>
+                                <span class="info-value">{{ book.word_count|default:"未知" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">评分：</span>
+                                <span class="info-value">{{ book.rating|floatformat:1 }}分</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">更新时间：</span>
+                                <span class="info-value">{{ book.update_time|date:"Y-m-d H:i" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if book.description %}
+                    <div class="description-section">
+                        <h3>简介</h3>
+                        <div class="description-content">{{ book.description|linebreaks }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- 标签页切换：购买、目录、评论 -->
+            <div class="detail-section">
+                <div class="tab-container">
+                    <div class="tab-buttons" role="tablist">
+                        <button type="button" class="tab-btn active" data-tab="purchase" onclick="switchTab('purchase')" role="tab" aria-selected="true" aria-controls="tab-purchase">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>购买</span>
+                        </button>
+                        <button type="button" class="tab-btn" data-tab="chapters" onclick="switchTab('chapters')" role="tab" aria-selected="false" aria-controls="tab-chapters">
+                            <i class="fas fa-list"></i>
+                            <span>目录</span>
+                            <span class="tab-count">({{ total_chapters }})</span>
+                        </button>
+                        <button type="button" class="tab-btn" data-tab="reviews" onclick="switchTab('reviews')" role="tab" aria-selected="false" aria-controls="tab-reviews">
+                            <i class="fas fa-comments"></i>
+                            <span>评论</span>
+                            <span class="tab-count">({{ total_reviews }})</span>
+                        </button>
+                    </div>
+                    
+                    <!-- 购买标签页 -->
+                    <div id="tab-purchase" class="tab-content active">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <h2>购买选项</h2>
+                        </div>
+                        <div class="section-content">
+                            <!-- 购买提示 -->
+                            <div class="bulk-purchase-section">
+                                <div class="bulk-purchase-content">
+                                    <div class="bulk-purchase-info">
+                                        <div class="bulk-purchase-icon">
+                                            <i class="fas fa-book"></i>
+                                        </div>
+                                        <div class="bulk-purchase-text">
+                                            <h3>整本购买</h3>
+                                            <p>购买整本书后，可以查看该书籍的所有章节内容，永久有效</p>
+                                        </div>
+                                    </div>
+                                    {% if request.session.username %}
+                                        {% if access_info.has_access %}
+                                            {% if access_info.access_type == 'purchased' or access_info.access_type == 'vip_support' %}
+                                            <!-- 用户已购买（无论是普通购买还是VIP支持作者） -->
+                                            <div class="purchased-status-card">
+                                                <div class="purchased-icon-wrapper">
+                                                    <i class="fas fa-check-circle purchased-icon"></i>
+                                                </div>
+                                                <div class="purchased-content">
+                                                    <h4 class="purchased-title">已购买</h4>
+                                                    <p class="purchased-subtitle">您已拥有此书籍，可永久阅读</p>
+                                                </div>
+                                                <div class="purchased-badge">
+                                                    <i class="fas fa-crown"></i>
+                                                    <span>已拥有</span>
+                                                </div>
+                                            </div>
+                                            {% elif access_info.is_vip %}
+                                            <!-- VIP用户免费访问，可选择购买支持作者 -->
+                                            <div class="vip-purchase-options">
+                                                <div class="vip-status-card">
+                                                    <div class="vip-status-icon">
+                                                        <i class="fas fa-crown"></i>
+                                                    </div>
+                                                    <div class="vip-status-text">
+                                                        <h4>VIP免费阅读</h4>
+                                                        <p>您可以免费阅读此书的所有内容</p>
+                                                    </div>
+                                                </div>
+                                                <div class="support-author-section">
+                                                    <h4><i class="fas fa-heart"></i> 支持作者</h4>
+                                                    <p>如果您喜欢这本书，可以选择购买支持作者</p>
+                                                    <div class="vip-purchase-buttons">
+                                                        <button class="vip-cart-btn" data-action="add-to-cart" data-book-id="{{ book.book_id }}" data-price="{{ book.price|default:9.99|floatformat:2 }}" data-purchase-type="vip_support">
+                                                            <i class="fas fa-shopping-cart"></i>
+                                                            <span>加入购物车</span>
+                                                            <span class="price">¥{{ book.price|default:9.99|floatformat:2 }}</span>
+                                                        </button>
+                                                        <button class="support-author-btn" data-action="support-author" data-book-id="{{ book.book_id }}" data-price="{{ book.price|default:9.99|floatformat:2 }}">
+                                                            <i class="fas fa-heart"></i>
+                                                            <span>支持作者</span>
+                                                            <span class="price">¥{{ book.price|default:9.99|floatformat:2 }}</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% else %}
+                                            <!-- 用户已购买（其他情况） -->
+                                            <div class="purchased-status-card">
+                                                <div class="purchased-icon-wrapper">
+                                                    <i class="fas fa-check-circle purchased-icon"></i>
+                                                </div>
+                                                <div class="purchased-content">
+                                                    <h4 class="purchased-title">已购买</h4>
+                                                    <p class="purchased-subtitle">您已拥有此书籍，可永久阅读</p>
+                                                </div>
+                                                <div class="purchased-badge">
+                                                    <i class="fas fa-crown"></i>
+                                                    <span>已拥有</span>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        {% else %}
+                                        <!-- 非VIP用户购买选项（与VIP用户界面相同，但VIP部分改为提醒购买VIP） -->
+                                        <div class="vip-purchase-options">
+                                            <button class="non-vip-status-card" onclick="showVipRechargeModal()" style="cursor: pointer; border: none; width: 100%; text-align: left;">
+                                                <div class="non-vip-status-icon">
+                                                    <i class="fas fa-crown"></i>
+                                                </div>
+                                                <div class="non-vip-status-text">
+                                                    <h4>购买VIP</h4>
+                                                    <p>成为VIP会员后，您可以免费阅读此书的所有内容</p>
+                                                </div>
+                                            </button>
+                                            <div class="support-author-section">
+                                                <h4><i class="fas fa-heart"></i> 支持作者</h4>
+                                                <p>如果您喜欢这本书，可以选择购买支持作者</p>
+                                                <div class="vip-purchase-buttons">
+                                                    <button class="vip-cart-btn" data-action="add-to-cart" data-book-id="{{ book.book_id }}" data-price="{{ book.price|default:9.99|floatformat:2 }}">
+                                                        <i class="fas fa-shopping-cart"></i>
+                                                        <span>加入购物车</span>
+                                                        <span class="price">¥{{ book.price|default:9.99|floatformat:2 }}</span>
+                                                    </button>
+                                                    <button class="support-author-btn" data-action="purchase-directly" data-book-id="{{ book.book_id }}" data-price="{{ book.price|default:9.99|floatformat:2 }}">
+                                                        <i class="fas fa-credit-card"></i>
+                                                        <span>立即购买</span>
+                                                        <span class="price">¥{{ book.price|default:9.99|floatformat:2 }}</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    {% else %}
+                                    <a href="{% url 'login' %}" class="bulk-purchase-btn">
+                                        <i class="fas fa-sign-in-alt"></i>
+                                        <span>登录购买</span>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="purchase-info-section">
+                                <h3><i class="fas fa-info-circle"></i> 购买说明</h3>
+                                                <ul class="purchase-info-list">
+                    <li><i class="fas fa-check-circle"></i> 前2章免费阅读，无需购买</li>
+                    <li><i class="fas fa-book"></i> 购买后可永久阅读全部章节</li>
+                    <li><i class="fas fa-shield-alt"></i> 支持多设备同步阅读进度</li>
+                    <li><i class="fas fa-download"></i> 购买后支持离线下载</li>
+                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 目录标签页 -->
+                    <div id="tab-chapters" class="tab-content">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="fas fa-list"></i>
+                            </div>
+                            <h2>章节列表</h2>
+                            <div class="section-status">
+                                <i class="fas fa-info-circle"></i>
+                                <span>点击"爬取章节内容"获取最新章节</span>
+                            </div>
+                        </div>
+                        <div class="section-content">
+                            {% if chapters %}
+                            <div class="chapter-list">
+                                {% for chapter in chapters %}
+                        <div class="chapter-item">
+                            <a href="{% url 'chapter_detail' book.book_id chapter.chapter_number %}" class="chapter-link">
+                                <div class="chapter-info">
+                                    <div class="chapter-title-section">
+                                        <span class="chapter-number">第{{ chapter.chapter_number }}章</span>
+                                        <span class="chapter-title">{{ chapter.chapter_title }}</span>
+                                        {% if chapter.word_count %}
+                                        <span class="chapter-word-count">{{ chapter.word_count }}字</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="chapter-status-section">
+                                        {% if chapter.chapter_number <= 2 %}
+                                        <span class="status-tag free-tag">免费</span>
+                                        {% else %}
+                                        <span class="status-tag category-tag">{{ book.category }}</span>
+                                        {% endif %}
+                                        {% if chapter.is_crawled %}
+                                        <span class="status-tag crawled-tag">已爬取</span>
+                                        {% elif chapter.chapter_number > 2 %}
+                                        <span class="status-tag uncrawled-tag">未爬取</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <!-- 分页控件 -->
+                            {% if chapters.has_other_pages %}
+                            <div class="pagination-container">
+                                <div class="pagination">
+                                    {% if chapters.has_previous %}
+                                    <a href="?page=1{% if request.GET.review_page %}&review_page={{ request.GET.review_page }}{% endif %}#tab-chapters" class="page-link" title="第一页" onclick="switchTab('chapters'); return true;">
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </a>
+                                    <a href="?page={{ chapters.previous_page_number }}{% if request.GET.review_page %}&review_page={{ request.GET.review_page }}{% endif %}#tab-chapters" class="page-link" title="上一页" onclick="switchTab('chapters'); return true;">
+                                        <i class="fas fa-angle-left"></i>
+                                    </a>
+                                    {% else %}
+                                    <span class="page-link disabled">
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </span>
+                                    <span class="page-link disabled">
+                                        <i class="fas fa-angle-left"></i>
+                                    </span>
+                                    {% endif %}
+                                    
+                                    <span class="page-info" style="display: inline-flex !important; align-items: center !important;">
+                                        第 {{ chapters.number }} / {{ chapters.paginator.num_pages }} 页
+                                        (共 {{ total_chapters }} 章)
+                                    </span>
+                                    
+                                    {% if chapters.has_next %}
+                                    <a href="?page={{ chapters.next_page_number }}{% if request.GET.review_page %}&review_page={{ request.GET.review_page }}{% endif %}#tab-chapters" class="page-link" title="下一页" onclick="switchTab('chapters'); return true;">
+                                        <i class="fas fa-angle-right"></i>
+                                    </a>
+                                    <a href="?page={{ chapters.paginator.num_pages }}{% if request.GET.review_page %}&review_page={{ request.GET.review_page }}{% endif %}#tab-chapters" class="page-link" title="最后一页" onclick="switchTab('chapters'); return true;">
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </a>
+                                    {% else %}
+                                    <span class="page-link disabled">
+                                        <i class="fas fa-angle-right"></i>
+                                    </span>
+                                    <span class="page-link disabled">
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% else %}
+                            <div class="empty-chapters">
+                                <div class="empty-icon">
+                                    <i class="fas fa-book-open"></i>
+                                </div>
+                                <h3>暂无章节内容</h3>
+                                <p>点击"爬取章节内容"按钮获取书籍的章节信息</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- 评论标签页 -->
+                    <div id="tab-reviews" class="tab-content">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="fas fa-comments"></i>
+                            </div>
+                            <h2>用户评价</h2>
+                        </div>
+                        <div class="section-content">
+                    {% if request.session.username %}
+                        {% if user_has_review %}
+                            <!-- 用户已经发表过评价，显示提示信息 -->
+                            {% if user_review %}
+                                    <div class="review-form-section">
+                                        <div class="already-reviewed">
+                                            <div class="already-reviewed-content">
+                                                <i class="fas fa-check-circle"></i>
+                                                <h3>您已发表评价</h3>
+                                                <p>您已经对该书籍发表过评价，如需修改请点击下方编辑按钮</p>
+                                                <div class="user-review-preview">
+                                                    <div class="preview-rating">
+                                                        {% for i in "12345" %}
+                                                            {% if forloop.counter <= user_review.rating %}
+                                                            <i class="fas fa-star"></i>
+                                                            {% else %}
+                                                            <i class="far fa-star"></i>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    </div>
+                                                    <div class="preview-content">{{ user_review.review_content|truncatechars:50 }}</div>
+                                                </div>
+                                                <div class="preview-actions" style="margin-top: 15px;">
+                                                    <button class="btn btn-primary btn-sm" data-action="edit-review" data-review-id="{{ user_review.evaluate_id }}" data-rating="{{ user_review.rating }}" data-content="{{ user_review.review_content|escapejs }}">
+                                                        <i class="fas fa-edit mr-2"></i> 编辑评价
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                            {% endif %}
+                        {% else %}
+                            <!-- 用户未发表评价，显示评价表单 -->
+                            <div class="review-form-section">
+                                <h3>发表评价</h3>
+                                <form id="reviewForm" class="review-form">
+                                    <div class="form-group">
+                                        <label class="form-label">评分</label>
+                                        <div class="rating-input">
+                                            <input type="radio" name="rating" value="1" id="star1">
+                                            <label for="star1"><i class="fas fa-star"></i></label>
+                                            <input type="radio" name="rating" value="2" id="star2">
+                                            <label for="star2"><i class="fas fa-star"></i></label>
+                                            <input type="radio" name="rating" value="3" id="star3">
+                                            <label for="star3"><i class="fas fa-star"></i></label>
+                                            <input type="radio" name="rating" value="4" id="star4">
+                                            <label for="star4"><i class="fas fa-star"></i></label>
+                                            <input type="radio" name="rating" value="5" id="star5">
+                                            <label for="star5"><i class="fas fa-star"></i></label>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="reviewContent" class="form-label">评价内容</label>
+                                        <textarea class="form-textarea auto-resize" id="reviewContent" rows="3" placeholder="分享您的阅读感受..." data-min-rows="3" data-max-rows="10"></textarea>
+                                    </div>
+                                    <button type="submit" class="submit-btn">提交评价</button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                    <div class="review-login-prompt">
+                        <div class="login-prompt-content">
+                            <i class="fas fa-sign-in-alt"></i>
+                            <h3>登录后发表评价</h3>
+                            <p>请先登录后再发表您的评价</p>
+                            <a href="{% url 'login' %}" class="login-btn">立即登录</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- 评价列表 -->
+                    {% if reviews %}
+                    <div class="reviews-section">
+                        <h3>用户评价 (共 {{ total_reviews }} 条)</h3>
+                        <div class="reviews-list">
+                            {% for review in reviews %}
+                            <div class="review-item" data-review-id="{{ review.evaluate_id }}">
+                                <div class="review-header">
+                                    <div class="review-user">
+                                        <strong class="user-name">{{ review.customer_name }}</strong>
+                                        <div class="rating-display">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= review.rating %}
+                                                <i class="fas fa-star"></i>
+                                                {% else %}
+                                                <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="review-actions">
+                                        <span class="review-time">{{ review.create_time|date:"Y-m-d H:i" }}</span>
+                                        {% if request.session.username and review.customer_name == request.session.name %}
+                                        <div class="review-buttons">
+                                            <button class="edit-review-btn" onclick="editReview('{{ review.evaluate_id }}')" title="编辑评价">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="delete-review-btn" onclick="deleteReview('{{ review.evaluate_id }}')" title="删除评价">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% if review.review_content %}
+                                <div class="review-content">{{ review.review_content }}</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- 评论分页控件 -->
+                        {% if reviews.has_other_pages %}
+                        <div class="pagination-container">
+                            <div class="pagination">
+                                {% if reviews.has_previous %}
+                                <a href="?review_page=1{% if request.GET.page %}&page={{ request.GET.page }}{% endif %}#tab-reviews" class="page-link" title="第一页" onclick="switchTab('reviews'); return true;">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                                <a href="?review_page={{ reviews.previous_page_number }}{% if request.GET.page %}&page={{ request.GET.page }}{% endif %}#tab-reviews" class="page-link" title="上一页" onclick="switchTab('reviews'); return true;">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                                {% else %}
+                                <span class="page-link disabled">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </span>
+                                <span class="page-link disabled">
+                                    <i class="fas fa-angle-left"></i>
+                                </span>
+                                {% endif %}
+                                
+                                <span class="page-info" style="display: inline-flex !important; align-items: center !important;">
+                                    第 {{ reviews.number }} / {{ reviews.paginator.num_pages }} 页
+                                    (共 {{ total_reviews }} 条评价)
+                                </span>
+                                
+                                {% if reviews.has_next %}
+                                <a href="?review_page={{ reviews.next_page_number }}{% if request.GET.page %}&page={{ request.GET.page }}{% endif %}#tab-reviews" class="page-link" title="下一页" onclick="switchTab('reviews'); return true;">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                                <a href="?review_page={{ reviews.paginator.num_pages }}{% if request.GET.page %}&page={{ request.GET.page }}{% endif %}#tab-reviews" class="page-link" title="最后一页" onclick="switchTab('reviews'); return true;">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                                {% else %}
+                                <span class="page-link disabled">
+                                    <i class="fas fa-angle-right"></i>
+                                </span>
+                                <span class="page-link disabled">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                            {% else %}
+                            <div class="empty-reviews">
+                                <div class="empty-icon">
+                                    <i class="fas fa-comments"></i>
+                                </div>
+                                <h3>暂无用户评价</h3>
+                                <p>成为第一个评价这本书的用户吧！</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 购买确认模态框 -->
+<div id="purchaseModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">购买本书</h3>
+                <button onclick="hidePurchaseModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="text-center">
+                <p class="text-gray-600 mb-4">购买整本书后，可以查看该书籍的所有章节内容</p>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <i class="fas fa-info-circle text-blue-600"></i>
+                    <span class="text-blue-800 ml-2">购买后即可永久阅读所有章节</span>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button onclick="hidePurchaseModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                    取消
+                </button>
+                <button onclick="confirmPurchase()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    确认购买
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 批量购买模态框 -->
+<div id="bulkPurchaseModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-10 mx-auto p-5 border w-[500px] shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">批量购买</h3>
+                <button onclick="hideBulkPurchaseModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="text-center mb-6">
+                <i class="fas fa-layer-group text-4xl text-green-600 mb-3"></i>
+                <h5 class="text-lg font-semibold mb-2">选择购买方案</h5>
+                <p class="text-gray-600">一次性购买多个章节，享受更优惠的价格</p>
+            </div>
+            
+            <div class="space-y-3 mb-6">
+                <!-- 购买选项 -->
+                <div onclick="selectBulkOption('fixed', 10, 0, this)" 
+                     class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-300 transition-colors">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h6 class="font-semibold text-gray-900">10章</h6>
+                            <p class="text-sm text-gray-600" id="discount10">享受9.5折优惠</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-green-600" id="price10">¥9.50</div>
+                            <div class="text-sm text-gray-500 line-through" id="originalPrice10">原价¥10.00</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div onclick="selectBulkOption('fixed', 100, 0, this)" 
+                     class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-300 transition-colors">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h6 class="font-semibold text-gray-900">100章</h6>
+                            <p class="text-sm text-gray-600" id="discount100">享受9折优惠</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-green-600" id="price100">¥90.00</div>
+                            <div class="text-sm text-gray-500 line-through" id="originalPrice100">原价¥100.00</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div onclick="selectBulkOption('fixed', 500, 0, this)" 
+                     class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-300 transition-colors">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h6 class="font-semibold text-gray-900">500章</h6>
+                            <p class="text-sm text-gray-600" id="discount500">享受8折优惠</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-green-600" id="price500">¥400.00</div>
+                            <div class="text-sm text-gray-500 line-through" id="originalPrice500">原价¥500.00</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div onclick="selectBulkOption('fixed', 1000, 0, this)" 
+                     class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-300 transition-colors">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h6 class="font-semibold text-gray-900">1000章</h6>
+                            <p class="text-sm text-gray-600" id="discount1000">享受7折优惠</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-green-600" id="price1000">¥700.00</div>
+                            <div class="text-sm text-gray-500 line-through" id="originalPrice1000">原价¥1000.00</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div onclick="selectBulkOption('all', 0, 0, this)" 
+                     class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-300 transition-colors">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h6 class="font-semibold text-gray-900">全本批量</h6>
+                            <p class="text-sm text-gray-600" id="discountAll">根据数量计算折扣</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-green-600" id="fullBookPrice">¥0.00</div>
+                            <div class="text-sm text-gray-500 line-through" id="fullBookOriginalPrice">原价¥0.00</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 自定义数量 -->
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <div>
+                            <h6 class="font-semibold text-gray-900">自定义数量</h6>
+                            <p class="text-sm text-gray-600">输入要购买的章节数量</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-green-600" id="customPrice">¥0.00</div>
+                            <div class="text-sm text-gray-500 line-through" id="customOriginalPrice">原价¥0.00</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" id="customChapterCount" min="1" value="1" 
+                               class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               oninput="updateCustomPrice(); selectBulkOption('custom', 0, 0, this.closest('.border'))" 
+                               onclick="selectBulkOption('custom', 0, 0, this.closest('.border'))">
+                        <span class="text-sm text-gray-600">章</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2" id="customDiscount">根据数量自动计算折扣</p>
+                </div>
+            </div>
+            
+            <!-- 购买方式选择 -->
+            <div class="mb-4">
+                <h6 class="font-semibold text-gray-900 mb-3">选择购买方式</h6>
+                <div class="space-y-2">
+                    <label class="flex items-center">
+                        <input type="radio" name="purchaseMethod" value="cart" checked class="mr-2">
+                        <span class="text-sm text-gray-700">添加到购物车（可与其他商品一起结账）</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="purchaseMethod" value="direct" class="mr-2">
+                        <span class="text-sm text-gray-700">直接购买（立即支付并创建订单）</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- 爬取内容选项 -->
+            <div class="mb-4">
+                <label class="flex items-center">
+                    <input type="checkbox" id="crawlContent" class="mr-2">
+                    <span class="text-sm text-gray-700">同时爬取章节内容（推荐）</span>
+                </label>
+            </div>
+            
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                <div class="flex items-center text-yellow-800">
+                    <i class="fas fa-lightbulb mr-2"></i>
+                    <span class="text-sm">批量购买享受折扣优惠，可选择添加到购物车或直接购买</span>
+                </div>
+            </div>
+            
+            <!-- 进度显示区域 -->
+            <div id="crawlProgressArea" class="hidden mb-4">
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">爬取进度</span>
+                        <span id="progressText" class="text-sm text-gray-600">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <div id="progressMessage" class="text-xs text-gray-600 mt-2">正在准备爬取...</div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button onclick="hideBulkPurchaseModal()"
+                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                    取消
+                </button>
+                <button id="confirmBulkPurchase" onclick="confirmBulkPurchase()" disabled
+                    class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    <i class="fas fa-credit-card mr-2"></i>确认购买
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑评价模态框 -->
+<div id="editReviewModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-[500px] shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">编辑评价</h3>
+                <button onclick="hideEditReviewModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="editReviewForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">评分</label>
+                    <div class="rating-input">
+                        <input type="radio" name="edit_rating" value="1" id="edit_star1">
+                        <label for="edit_star1"><i class="fas fa-star"></i></label>
+                        <input type="radio" name="edit_rating" value="2" id="edit_star2">
+                        <label for="edit_star2"><i class="fas fa-star"></i></label>
+                        <input type="radio" name="edit_rating" value="3" id="edit_star3">
+                        <label for="edit_star3"><i class="fas fa-star"></i></label>
+                        <input type="radio" name="edit_rating" value="4" id="edit_star4">
+                        <label for="edit_star4"><i class="fas fa-star"></i></label>
+                        <input type="radio" name="edit_rating" value="5" id="edit_star5">
+                        <label for="edit_star5"><i class="fas fa-star"></i></label>
+                    </div>
+                </div>
+                <div>
+                    <label for="editReviewContent" class="block text-sm font-medium text-gray-700 mb-2">评价内容</label>
+                    <textarea id="editReviewContent" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 auto-resize" placeholder="分享您的阅读感受..." data-min-rows="4" data-max-rows="10"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="hideEditReviewModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                        取消
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                        更新评价
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 书籍详情页优化样式 */
+.book-detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.book-detail-layout {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+/* 书籍信息区域 */
+.book-info-section {
+    position: sticky;
+    top: 2rem;
+}
+
+.book-info-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+}
+
+.book-cover-container {
+    width: 200px;
+    height: 280px;
+    margin: 0 auto 1.5rem;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #e9ecef;
+}
+
+.book-cover-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.book-cover-image:hover {
+    transform: scale(1.05);
+}
+
+.no-cover-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #6c757d;
+    font-size: 4rem;
+}
+
+.book-basic-info {
+    text-align: center;
+}
+
+.book-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+}
+
+.book-author {
+    font-size: 1rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+.book-meta-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.meta-tag {
+    background: #e9ecef;
+    color: #495057;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.book-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-item i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.stat-item i.fa-star {
+    color: #ffc107;
+}
+
+.stat-item i.fa-heart {
+    color: #dc3545;
+}
+
+.stat-item i.fa-list {
+    color: #007bff;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.action-btn i {
+    font-size: 1rem;
+}
+
+.primary-btn {
+    background: #007bff;
+    color: white;
+}
+
+.primary-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+
+.warning-btn {
+    background: #ffc107;
+    color: #212529;
+}
+
+.warning-btn:hover {
+    background: #e0a800;
+    transform: translateY(-2px);
+}
+
+.success-btn {
+    background: #28a745;
+    color: white;
+}
+
+.success-btn:hover {
+    background: #1e7e34;
+}
+
+.danger-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.danger-btn:hover {
+    background: #c82333;
+}
+
+.outline-btn {
+    background: transparent;
+    color: #6c757d;
+    border: 2px solid #dee2e6;
+}
+
+.outline-btn:hover {
+    background: #6c757d;
+    color: white;
+    border-color: #6c757d;
+}
+
+.action-buttons-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+/* 详情区域 */
+.book-details-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.detail-section {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+}
+
+.section-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.section-icon {
+    width: 40px;
+    height: 40px;
+    background: #007bff;
+    color: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.section-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+    flex: 1;
+}
+
+.section-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.section-content {
+    padding: 2rem;
+}
+
+/* 信息网格 */
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.info-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #495057;
+    min-width: 80px;
+    margin-right: 1rem;
+}
+
+.info-value {
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.description-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.description-section h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.description-content {
+    color: #495057;
+    line-height: 1.7;
+    font-size: 0.95rem;
+}
+
+/* 章节列表 */
+.chapter-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.chapter-item {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.chapter-item:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+}
+
+.chapter-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    padding: 1rem 1.5rem;
+    background: white;
+    transition: background-color 0.3s ease;
+}
+
+.chapter-link:hover {
+    background: #f8f9fa;
+    text-decoration: none;
+    color: inherit;
+}
+
+.chapter-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chapter-title-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.chapter-number {
+    font-weight: 700;
+    color: #007bff;
+    font-size: 0.9rem;
+    min-width: 80px;
+}
+
+.chapter-title {
+    font-weight: 600;
+    color: #2c3e50;
+    flex: 1;
+}
+
+.chapter-word-count {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.chapter-status-section {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-tag {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.free-tag {
+    background: #d4edda;
+    color: #155724;
+}
+
+.category-tag {
+    background: #6f42c1;
+    color: white;
+}
+
+.purchased-tag {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.crawled-tag {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.uncrawled-tag {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.purchase-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: 0.5rem;
+}
+
+.buy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    border: none;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.buy-btn i {
+    font-size: 0.7rem;
+}
+
+.cart-btn {
+    background: #28a745;
+    color: white;
+}
+
+.cart-btn:hover {
+    background: #1e7e34;
+    transform: translateY(-1px);
+}
+
+.direct-btn {
+    background: #007bff;
+    color: white;
+}
+
+.direct-btn:hover {
+    background: #0056b3;
+    transform: translateY(-1px);
+}
+
+/* 批量购买区域 */
+.bulk-purchase-section {
+    margin-top: 2rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 50%, #3b82f6 100%);
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(147, 197, 253, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.bulk-purchase-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+.bulk-purchase-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.bulk-purchase-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.bulk-purchase-icon {
+    width: 64px;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    color: white;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.bulk-purchase-icon:hover {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.bulk-purchase-text h3 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 0.5rem 0;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    letter-spacing: -0.5px;
+}
+
+.bulk-purchase-text p {
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1rem;
+    margin: 0;
+    font-weight: 500;
+    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.15);
+}
+
+.bulk-purchase-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 2rem;
+    background: rgba(255, 255, 255, 0.95);
+    color: #3b82f6;
+    border-radius: 14px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.bulk-purchase-btn:hover {
+    background: #ffffff;
+    transform: translateY(-3px) scale(1.05);
+    text-decoration: none;
+    color: #2563eb;
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+}
+
+.bulk-purchase-btn:active {
+    transform: translateY(-1px) scale(1.02);
+}
+
+.bulk-purchase-btn i {
+    font-size: 1.25rem;
+    transition: transform 0.3s ease;
+}
+
+.bulk-purchase-btn:hover i {
+    transform: scale(1.2) rotate(5deg);
+}
+
+/* VIP购买选项样式 */
+.vip-purchase-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.vip-free-btn {
+    background: #ffc107 !important;
+    color: #212529 !important;
+    border: 2px solid #ffc107;
+}
+
+.support-btn {
+    background: #e74c3c !important;
+    color: white !important;
+    border: 2px solid #e74c3c;
+    transition: all 0.3s ease;
+}
+
+.support-btn:hover {
+    background: #c0392b !important;
+    border-color: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.support-btn i {
+    animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* 空状态 */
+.empty-chapters, .empty-reviews {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #6c757d;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-chapters h3, .empty-reviews h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.empty-chapters p, .empty-reviews p {
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+/* 评价表单 */
+.review-form-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+}
+
+/* 已发表评价提示 */
+.already-reviewed {
+    text-align: center;
+    padding: 2rem;
+}
+
+.already-reviewed-content {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.already-reviewed-content i {
+    font-size: 3rem;
+    color: #10b981;
+    margin-bottom: 1rem;
+}
+
+.already-reviewed-content h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.already-reviewed-content p {
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.user-review-preview {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.preview-rating {
+    margin-bottom: 0.5rem;
+}
+
+.preview-rating i {
+    color: #fbbf24;
+    margin-right: 2px;
+}
+
+.preview-content {
+    color: #4b5563;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+/* 登录提示 */
+.review-login-prompt {
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+    border-radius: 12px;
+    border: 1px solid #bbdefb;
+    text-align: center;
+}
+
+.login-prompt-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.login-prompt-content i {
+    font-size: 2.5rem;
+    color: #007bff;
+    margin-bottom: 0.5rem;
+}
+
+.login-prompt-content h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.login-prompt-content p {
+    color: #6c757d;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.login-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.login-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+    text-decoration: none;
+    color: white;
+}
+
+.review-form-section h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.rating-input {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.rating-input input[type="radio"] {
+    display: none;
+}
+
+.rating-input label {
+    font-size: 1.5rem;
+    color: #dee2e6;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.rating-input label:hover,
+.rating-input input[type="radio"]:checked + label {
+    color: #ffc107;
+}
+
+.form-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    resize: vertical;
+    transition: border-color 0.3s ease;
+}
+
+.form-textarea:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+.submit-btn {
+    background: #007bff;
+    color: white;
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.submit-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+
+/* 评价列表 */
+.reviews-section h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+}
+
+.reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.review-item {
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.review-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.review-buttons {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.edit-review-btn, .delete-review-btn {
+    background: none;
+    border: none;
+    padding: 0.25rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.875rem;
+}
+
+.edit-review-btn {
+    color: #007bff;
+}
+
+.edit-review-btn:hover {
+    background: #e3f2fd;
+    color: #0056b3;
+}
+
+.delete-review-btn {
+    color: #dc3545;
+}
+
+.delete-review-btn:hover {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.review-user {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.user-name {
+    color: #2c3e50;
+    font-size: 1rem;
+}
+
+.rating-display {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.rating-display i {
+    font-size: 0.875rem;
+}
+
+.rating-display .fa-star {
+    color: #ffc107;
+}
+
+.rating-display .far {
+    color: #dee2e6;
+}
+
+.review-time {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.review-content {
+    color: #495057;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .book-detail-layout {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .book-info-section {
+        position: static;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .bulk-purchase-content {
+        flex-direction: column;
+        gap: 1.5rem;
+        text-align: center;
+    }
+    
+    .bulk-purchase-info {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .bulk-purchase-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .action-buttons-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .book-stats-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+}
+
+/* 整本购买界面样式 */
+.vip-purchase-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.vip-status-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #ffc107 0%, #ffca2c 100%);
+    border-radius: 12px;
+    color: #212529;
+}
+
+.vip-status-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.vip-status-text h4 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.vip-status-text p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* 非VIP用户购买VIP按钮样式（蓝色） */
+.non-vip-status-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border-radius: 12px;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.non-vip-status-card:hover {
+    background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.non-vip-status-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.non-vip-status-text h4 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+}
+
+.non-vip-status-text p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+    color: white;
+}
+
+.support-author-section {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+}
+
+.support-author-section h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.support-author-section p {
+    margin: 0 0 1rem 0;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.support-author-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.support-author-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.vip-purchase-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.vip-cart-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.vip-cart-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.vip-cart-btn i {
+    font-size: 1.1rem;
+}
+
+.vip-cart-btn .price {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.purchase-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.purchase-option {
+    display: flex;
+    width: 100%;
+}
+
+.purchase-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 1rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.purchase-btn i {
+    font-size: 1.1rem;
+}
+
+.purchase-btn .price {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.cart-btn {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+}
+
+.cart-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.direct-btn {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    color: white;
+}
+
+.direct-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.bulk-purchase-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.bulk-purchase-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    text-decoration: none;
+    color: white;
+}
+
+/* 已购买状态卡片样式 */
+.purchased-status-card {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 2rem 0.5rem;
+    min-width: 0.5rem;
+    background: linear-gradient(135deg, #28a745 0%, #20c997 50%, #17a2b8 100%);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(40, 167, 69, 0.25),
+                0 4px 12px rgba(40, 167, 69, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.purchased-status-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.purchased-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    flex-shrink: 0;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15),
+                    inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2),
+                    inset 0 2px 4px rgba(255, 255, 255, 0.4);
+    }
+}
+
+.purchased-icon {
+    font-size: 2rem;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    animation: checkmark 0.6s ease-out;
+}
+
+@keyframes checkmark {
+    0% {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2) rotate(10deg);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+.purchased-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.purchased-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    letter-spacing: 0.5px;
+}
+
+.purchased-subtitle {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.purchased-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1),
+                inset 0 1px 2px rgba(255, 255, 255, 0.3);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.purchased-badge i {
+    font-size: 0.9rem;
+    animation: crown 2s ease-in-out infinite;
+}
+
+@keyframes crown {
+    0%, 100% {
+        transform: rotate(0deg) scale(1);
+    }
+    25% {
+        transform: rotate(-10deg) scale(1.1);
+    }
+    75% {
+        transform: rotate(10deg) scale(1.1);
+    }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .purchased-status-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.25rem 2rem;
+        gap: 1rem;
+    }
+    
+    .purchased-icon-wrapper {
+        width: 56px;
+        height: 56px;
+    }
+    
+    .purchased-icon {
+        font-size: 1.75rem;
+    }
+    
+    .purchased-title {
+        font-size: 1.1rem;
+    }
+    
+    .purchased-subtitle {
+        font-size: 0.85rem;
+    }
+    
+    .purchased-badge {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+}
+
+.purchase-info-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.purchase-info-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.purchase-info-list li i {
+    color: #28a745;
+    font-size: 1rem;
+}
+
+/* VIP已支持作者状态样式 */
+.vip-supported-status {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.supported-status-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    border-radius: 12px;
+    color: white;
+}
+
+.supported-status-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.supported-status-text h4 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.supported-status-text p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+</style>
+{% endblock %}
+
+{% block extra_css_after %}
+<link href="{% static 'css/books.css' %}" rel="stylesheet">
+<style>
+/* 强制覆盖 Tailwind CSS 的标签页样式 - 确保按钮正确显示 */
+.tab-container {
+    width: 100% !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.tab-buttons {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 0 !important;
+    border-bottom: 2px solid #e5e7eb !important;
+    margin-bottom: 2rem !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    border-radius: 12px 12px 0 0 !important;
+    padding-top: 0.5rem !important;
+    align-items: flex-end !important;
+    justify-content: stretch !important;
+}
+
+button.tab-btn,
+.tab-btn[type="button"] {
+    /* 重置所有默认样式 */
+    margin: 0 !important;
+    padding: 1rem 1.5rem !important;
+    border: none !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #6b7280 !important;
+    font: inherit !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    line-height: 1.5 !important;
+    text-align: center !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    outline: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    box-sizing: border-box !important;
+    
+    /* 布局样式 - 均分空间 */
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    white-space: nowrap !important;
+    flex: 1 1 0% !important; /* 均分空间 */
+    min-width: 0 !important;
+    
+    /* 定位和视觉效果 */
+    position: relative !important;
+    top: 2px !important;
+    border-bottom: 3px solid transparent !important;
+    border-radius: 12px 12px 0 0 !important;
+    margin-bottom: -2px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.tab-btn::before {
+    content: '' !important;
+    position: absolute !important;
+    bottom: -2px !important;
+    left: 50% !important;
+    transform: translateX(-50%) scaleX(0) !important;
+    width: 80% !important;
+    height: 3px !important;
+    background: linear-gradient(90deg, #93c5fd 0%, #60a5fa 50%, #3b82f6 100%) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-radius: 3px 3px 0 0 !important;
+    z-index: 1 !important;
+}
+
+.tab-btn::after {
+    content: '' !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background: linear-gradient(135deg, rgba(147, 197, 253, 0.12) 0%, rgba(96, 165, 250, 0.08) 100%) !important;
+    border-radius: 12px 12px 0 0 !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
+}
+
+.tab-btn:hover:not(.active) {
+    color: #60a5fa !important;
+    background: rgba(147, 197, 253, 0.1) !important;
+    transform: translateY(-2px) !important;
+}
+
+.tab-btn:hover::before {
+    transform: translateX(-50%) scaleX(0.7) !important;
+}
+
+.tab-btn:hover::after {
+    opacity: 1 !important;
+}
+
+.tab-btn.active {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 50%, #3b82f6 100%) !important;
+    background-color: #93c5fd !important;
+    border-bottom-color: transparent !important;
+    transform: translateY(0) !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(147, 197, 253, 0.4) !important;
+}
+
+.tab-btn.active::before {
+    transform: translateX(-50%) scaleX(1) !important;
+    width: 90% !important;
+}
+
+.tab-btn.active::after {
+    opacity: 1 !important;
+}
+
+.tab-btn i {
+    font-size: 1.125rem !important;
+    transition: transform 0.3s ease !important;
+    display: inline-block !important;
+}
+
+.tab-btn:hover i,
+.tab-btn.active i {
+    transform: scale(1.1) !important;
+}
+
+.tab-count {
+    font-size: 0.8125rem !important;
+    color: #9ca3af !important;
+    font-weight: 500 !important;
+    background: rgba(156, 163, 175, 0.15) !important;
+    padding: 0.125rem 0.5rem !important;
+    border-radius: 12px !important;
+    transition: all 0.3s ease !important;
+    margin-left: 0.25rem !important;
+    display: inline-block !important;
+}
+
+.tab-btn.active .tab-count {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.25) !important;
+    font-weight: 600 !important;
+}
+
+.tab-content {
+    display: none !important;
+    animation: fadeIn 0.3s ease !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+.tab-content.active {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* 确保 Tailwind 不会覆盖我们的样式 - 使用最高优先级选择器 */
+.detail-section .tab-container .tab-buttons button.tab-btn,
+.book-detail-container .detail-section .tab-container .tab-buttons button.tab-btn {
+    /* 明确重置所有可能被Tailwind覆盖的属性 */
+    margin: 0 !important;
+    margin-top: 0 !important;
+    margin-right: 0 !important;
+    margin-bottom: -2px !important;
+    margin-left: 0 !important;
+    padding: 1rem 1.5rem !important;
+    border: none !important;
+    border-width: 0 !important;
+    border-style: none !important;
+    border-color: transparent !important;
+    border-bottom: 3px solid transparent !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    color: #6b7280 !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    font-family: inherit !important;
+    line-height: 1.5 !important;
+    text-align: center !important;
+    text-decoration: none !important;
+    text-transform: none !important;
+    cursor: pointer !important;
+    outline: none !important;
+    outline-width: 0 !important;
+    box-shadow: none !important;
+    position: relative !important;
+    top: 2px !important;
+    border-radius: 12px 12px 0 0 !important;
+    white-space: nowrap !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    flex: 1 1 0% !important; /* 均分空间 */
+    min-width: 0 !important;
+}
+
+.detail-section .tab-container .tab-buttons button.tab-btn.active,
+.book-detail-container .detail-section .tab-container .tab-buttons button.tab-btn.active {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 50%, #3b82f6 100%) !important;
+    background-color: #93c5fd !important;
+    border-bottom-color: transparent !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(147, 197, 253, 0.4) !important;
+}
+
+.detail-section .tab-container .tab-buttons button.tab-btn:hover:not(.active),
+.book-detail-container .detail-section .tab-container .tab-buttons button.tab-btn:hover:not(.active) {
+    color: #60a5fa !important;
+    background: rgba(147, 197, 253, 0.15) !important;
+    background-color: rgba(147, 197, 253, 0.15) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* 分页样式 - 确保正确显示 */
+.detail-section .pagination-container {
+    margin-top: 2.5rem !important;
+    padding-top: 2rem !important;
+    border-top: 2px solid #e5e7eb !important;
+    background: linear-gradient(to bottom, transparent, rgba(249, 250, 251, 0.5)) !important;
+    border-radius: 0 0 12px 12px !important;
+}
+
+.detail-section .pagination-container .pagination {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.75rem !important;
+    flex-wrap: wrap !important;
+    padding: 1rem !important;
+}
+
+.detail-section .pagination-container .pagination .page-link {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 3rem !important;
+    height: 3rem !important;
+    padding: 0.625rem 1rem !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+    border: 2px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    color: #374151 !important;
+    text-decoration: none !important;
+    font-size: 0.875rem !important;
+    font-weight: 700 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.detail-section .pagination-container .pagination .page-link::before {
+    content: '' !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 50%, #3b82f6 100%) !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+    border-radius: 10px !important;
+}
+
+.detail-section .pagination-container .pagination .page-link:hover:not(.disabled) {
+    border-color: #60a5fa !important;
+    color: #ffffff !important;
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow: 0 6px 20px rgba(147, 197, 253, 0.4) !important;
+}
+
+.detail-section .pagination-container .pagination .page-link:hover:not(.disabled)::before {
+    opacity: 1 !important;
+}
+
+.detail-section .pagination-container .pagination .page-link:hover:not(.disabled) i {
+    position: relative !important;
+    z-index: 1 !important;
+    color: #ffffff !important;
+}
+
+.detail-section .pagination-container .pagination .page-link.disabled {
+    background: #f9fafb !important;
+    border-color: #e5e7eb !important;
+    color: #9ca3af !important;
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+    box-shadow: none !important;
+    pointer-events: none !important;
+}
+
+.detail-section .pagination-container .pagination .page-link i {
+    font-size: 1.125rem !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.detail-section .pagination-container .pagination .page-info {
+    padding: 0.75rem 1.5rem !important;
+    color: #1f2937 !important;
+    font-size: 0.9375rem !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    background: linear-gradient(135deg, rgba(147, 197, 253, 0.15) 0%, rgba(96, 165, 250, 0.12) 100%) !important;
+    border-radius: 12px !important;
+    border: 2px solid rgba(147, 197, 253, 0.3) !important;
+    box-shadow: 0 2px 8px rgba(147, 197, 253, 0.2) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/book-detail.js' %}"></script>
+<script src="{% static 'js/bookshelf-debug.js' %}"></script>
+<script>
+// 设置页面数据
+document.body.dataset.bookId = "{{ book.book_id }}";
+document.body.dataset.bookTitle = "{{ book.title|escapejs }}";
+document.body.dataset.isInBookshelf = "{{ is_in_bookshelf|yesno:'true,false' }}";
+document.body.dataset.isCollected = "{{ is_collected|yesno:'true,false' }}";
+document.body.dataset.bookPrice = "{{ book.price|default:'0' }}";
+document.body.dataset.chapterCount = "{{ book.chapter_count|default:'0' }}";
+document.body.dataset.username = "{{ request.session.username|default:'' }}";
+document.body.dataset.purchasedChapters = "{{ purchased_chapters|join:',' }}";
+
+// 调试信息
+console.log('页面数据设置:', {
+    bookId: document.body.dataset.bookId,
+    bookTitle: document.body.dataset.bookTitle,
+    username: document.body.dataset.username,
+    session: {
+        username: "{{ request.session.username|default:'None' }}",
+        name: "{{ request.session.name|default:'None' }}",
+        is_admin: "{{ request.session.is_admin|default:'None' }}"
+    }
+});
+</script>
+<script>
+// 标签页切换功能
+function switchTab(tabName) {
+    console.log('切换标签页:', tabName);
+    
+    // 隐藏所有标签页内容
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+        // 确保隐藏
+        content.style.display = 'none';
+    });
+    
+    // 移除所有按钮的激活状态
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // 显示选中的标签页内容
+    const targetContent = document.getElementById(`tab-${tabName}`);
+    if (targetContent) {
+        targetContent.classList.add('active');
+        // 强制显示
+        targetContent.style.display = 'block';
+        // 触发重排以确保样式应用
+        targetContent.offsetHeight;
+    } else {
+        console.error('未找到标签页内容:', `tab-${tabName}`);
+    }
+    
+    // 激活对应的按钮
+    const targetBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+    if (targetBtn) {
+        targetBtn.classList.add('active');
+    } else {
+        console.error('未找到标签页按钮:', tabName);
+    }
+    
+    // 更新URL hash，但不触发页面跳转
+    if (history.pushState) {
+        const url = new URL(window.location);
+        url.hash = `tab-${tabName}`;
+        window.history.pushState({}, '', url);
+    }
+    
+    // 滚动到标签页容器顶部（平滑滚动）
+    const tabContainer = document.querySelector('.tab-container');
+    if (tabContainer) {
+        setTimeout(() => {
+            tabContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    }
+}
+
+// 页面加载时检查URL中的hash，切换到对应标签页
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('页面加载完成，初始化标签页');
+    
+    // 确保所有标签页内容初始状态正确
+    document.querySelectorAll('.tab-content').forEach((content, index) => {
+        if (index === 0 && content.id === 'tab-purchase') {
+            // 第一个是购买标签页，应该显示
+            content.classList.add('active');
+            content.style.display = 'block';
+        } else {
+            content.classList.remove('active');
+            content.style.display = 'none';
+        }
+    });
+    
+    // 检查URL hash
+    const hash = window.location.hash;
+    if (hash === '#tab-chapters' || hash === '#tab-reviews' || hash === '#tab-purchase') {
+        const tabName = hash.replace('#tab-', '');
+        console.log('从URL hash切换到:', tabName);
+        setTimeout(() => switchTab(tabName), 50);
+    } else {
+        // 默认显示购买标签页
+        console.log('默认显示购买标签页');
+        setTimeout(() => switchTab('purchase'), 50);
+    }
+    
+    // 更新分页链接，保持当前标签页状态
+    const paginationLinks = document.querySelectorAll('.pagination a.page-link');
+    paginationLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            // 确保点击分页链接时保持在目录标签页
+            switchTab('chapters');
+        });
+    });
+    
+    // 确保标签页按钮点击事件正常工作
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        const tabName = btn.getAttribute('data-tab');
+        if (tabName) {
+            // 添加事件监听器（同时保留onclick作为备用）
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('点击标签页按钮:', tabName);
+                switchTab(tabName);
+                return false;
+            });
+            
+            // 确保onclick也工作
+            btn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('onclick触发:', tabName);
+                switchTab(tabName);
+                return false;
+            };
+        }
+    });
+    
+    console.log('标签页初始化完成，共找到', document.querySelectorAll('.tab-btn').length, '个按钮');
+});
+
+function showPurchaseModal() {
+    document.getElementById('purchaseModal').classList.remove('hidden');
+}
+
+// 隐藏购买模态框
+function hidePurchaseModal() {
+    document.getElementById('purchaseModal').classList.add('hidden');
+}
+
+// 确认购买功能（购买整本书）
+function confirmPurchase() {
+    const purchaseBookId = parseInt(document.body.dataset.bookId) || 0;
+    const purchasePrice = parseFloat(document.body.dataset.bookPrice) || 9.99;
+    const purchaseBookTitle = document.body.dataset.bookTitle || '';
+    if (confirm(`确定要购买《${purchaseBookTitle}》吗？价格：¥${purchasePrice.toFixed(2)}`)) {
+        addBookToCart(purchaseBookId, purchasePrice);
+        hidePurchaseModal();
+    }
+}
+
+// 检查爬取状态
+function checkCrawlStatus() {
+    const bookId = document.body.dataset.bookId;
+    const crawlBtn = document.getElementById('crawlBtn');
+    const crawlText = document.getElementById('crawlText');
+    
+    if (!bookId || !crawlBtn || !crawlText) return;
+    
+    fetch(`/api/check-crawl-status/${bookId}/`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 检查是否全部爬取
+            const totalChapters = data.total_chapters || 0;
+            const crawledChapters = data.crawled_chapters || 0;
+            const allCrawled = totalChapters > 0 && crawledChapters >= totalChapters;
+            
+            if (allCrawled) {
+                // 如果全部爬取，更新按钮状态
+                crawlText.textContent = '已全部爬取';
+                crawlBtn.disabled = true;
+                // 移除警告样式，添加成功样式
+                crawlBtn.classList.remove('warning-btn', 'btn-warning');
+                crawlBtn.classList.add('success-btn', 'btn-success');
+            } else {
+                // 如果未全部爬取，确保按钮可用
+                crawlBtn.disabled = false;
+                if (crawledChapters > 0) {
+                    crawlText.textContent = '继续爬取';
+                } else {
+                    crawlText.textContent = '爬取章节内容';
+                }
+                // 移除成功样式，添加警告样式
+                crawlBtn.classList.remove('success-btn', 'btn-success');
+                crawlBtn.classList.add('warning-btn', 'btn-warning');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('获取状态错误:', error);
+    });
+}
+
+// 切换书架状态
+function toggleBookshelf() {
+    const isInBookshelf = document.body.dataset.isInBookshelf === 'true';
+    if (isInBookshelf) {
+        removeFromBookshelf();
+    } else {
+        addToBookshelf();
+    }
+}
+
+// 添加到书架功能
+function addToBookshelf() {
+    const bookTitle = document.body.dataset.bookTitle;
+    
+    fetch('/api/add-to-bookshelf/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            book_title: bookTitle
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage(data.message, 'success');
+            updateBookshelfButton(true);
+        } else {
+            showMessage(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('添加到书架失败，请重试', 'error');
+    });
+}
+
+// 从书架移除功能
+function removeFromBookshelf() {
+    const bookTitle = document.body.dataset.bookTitle;
+    
+    if (confirm(`确定要从书架中移除《${bookTitle}》吗？`)) {
+        fetch('/api/remove-from-bookshelf/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                book_title: bookTitle
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage(data.message, 'success');
+                updateBookshelfButton(false);
+            } else {
+                showMessage(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('移除失败，请重试', 'error');
+        });
+    }
+}
+
+// 更新书架按钮状态
+function updateBookshelfButton(isInBookshelf) {
+    const bookshelfText = document.getElementById('bookshelfText');
+    const bookshelfBtn = document.getElementById('bookshelfBtn');
+    
+    if (bookshelfText) {
+        bookshelfText.textContent = isInBookshelf ? '已加入' : '加入书架';
+    }
+    
+    if (bookshelfBtn) {
+        if (isInBookshelf) {
+            bookshelfBtn.classList.add('success-btn');
+            bookshelfBtn.classList.remove('outline-btn');
+        } else {
+            bookshelfBtn.classList.remove('success-btn');
+            bookshelfBtn.classList.add('outline-btn');
+        }
+    }
+    
+    // 更新dataset
+    document.body.dataset.isInBookshelf = isInBookshelf.toString();
+}
+
+// 切换收藏状态
+function toggleCollection() {
+    const isCollected = document.body.dataset.isCollected === 'true';
+    if (isCollected) {
+        removeFromCollection();
+    } else {
+        addToCollection();
+    }
+}
+
+// 收藏书籍功能
+function addToCollection() {
+    const bookTitle = document.body.dataset.bookTitle;
+    
+    fetch('/api/collect-book/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            book_title: bookTitle
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage(data.message, 'success');
+            updateCollectionButton(true);
+            // 更新收藏统计（使用API返回的收藏数）
+            if (data.collection_count !== undefined) {
+                updateCollectionCountByValue(data.collection_count);
+            } else {
+                updateCollectionCount(1);
+            }
+        } else {
+            showMessage(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('收藏失败，请重试', 'error');
+    });
+}
+
+// 取消收藏功能
+function removeFromCollection() {
+    const bookTitle = document.body.dataset.bookTitle;
+    
+    if (confirm(`确定要取消收藏《${bookTitle}》吗？`)) {
+        fetch('/api/remove-from-collection/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                book_title: bookTitle
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage(data.message, 'success');
+                updateCollectionButton(false);
+                // 更新收藏统计（使用API返回的收藏数）
+                if (data.collection_count !== undefined) {
+                    updateCollectionCountByValue(data.collection_count);
+                } else {
+                    updateCollectionCount(-1);
+                }
+            } else {
+                showMessage(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('取消收藏失败，请重试', 'error');
+        });
+    }
+}
+
+// 更新收藏统计（通过增量）
+function updateCollectionCount(change) {
+    // 查找包含"收藏"标签的统计项
+    const statItems = document.querySelectorAll('.stat-item');
+    for (let item of statItems) {
+        const label = item.querySelector('.stat-label');
+        if (label && label.textContent.includes('收藏')) {
+            const valueElement = item.querySelector('.stat-value');
+            if (valueElement) {
+                const currentCount = parseInt(valueElement.textContent) || 0;
+                const newCount = Math.max(0, currentCount + change);
+                valueElement.textContent = newCount;
+            }
+            break;
+        }
+    }
+}
+
+// 更新收藏统计（通过具体值）
+function updateCollectionCountByValue(count) {
+    // 查找包含"收藏"标签的统计项
+    const statItems = document.querySelectorAll('.stat-item');
+    for (let item of statItems) {
+        const label = item.querySelector('.stat-label');
+        if (label && label.textContent.includes('收藏')) {
+            const valueElement = item.querySelector('.stat-value');
+            if (valueElement) {
+                valueElement.textContent = count;
+            }
+            break;
+        }
+    }
+}
+
+// 更新书籍评分显示
+function updateBookRating(rating) {
+    // 更新统计区域的评分
+    const statItems = document.querySelectorAll('.stat-item');
+    for (let item of statItems) {
+        const label = item.querySelector('.stat-label');
+        if (label && label.textContent.includes('评分')) {
+            const valueElement = item.querySelector('.stat-value');
+            if (valueElement) {
+                valueElement.textContent = parseFloat(rating).toFixed(1);
+            }
+            break;
+        }
+    }
+    
+    // 更新书籍信息区域的评分
+    const infoLabels = document.querySelectorAll('.info-label');
+    for (let label of infoLabels) {
+        if (label.textContent.includes('评分')) {
+            const valueElement = label.nextElementSibling;
+            if (valueElement && valueElement.classList.contains('info-value')) {
+                valueElement.textContent = parseFloat(rating).toFixed(1) + '分';
+            }
+        }
+    }
+}
+
+// 更新收藏按钮状态
+function updateCollectionButton(isCollected) {
+    const collectText = document.getElementById('collectText');
+    const collectBtn = document.getElementById('collectBtn');
+    
+    if (collectText) {
+        collectText.textContent = isCollected ? '已收藏' : '收藏';
+    }
+    
+    if (collectBtn) {
+        if (isCollected) {
+            collectBtn.classList.add('danger-btn');
+            collectBtn.classList.remove('outline-btn');
+        } else {
+            collectBtn.classList.remove('danger-btn');
+            collectBtn.classList.add('outline-btn');
+        }
+    }
+    
+    // 更新dataset
+    document.body.dataset.isCollected = isCollected.toString();
+}
+
+// 获取Cookie函数
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 爬取章节功能
+function crawlChapters(chapterNumbers = null) {
+    const bookId = document.body.dataset.bookId;
+    const bookTitle = document.body.dataset.bookTitle;
+    const crawlBtn = document.getElementById('crawlBtn');
+    const crawlText = document.getElementById('crawlText');
+    
+    if (!bookId) {
+        alert('书籍ID不存在');
+        return;
+    }
+    
+    // 更新按钮状态
+    crawlBtn.disabled = true;
+    crawlText.textContent = '正在爬取...';
+    crawlBtn.classList.remove('warning-btn', 'btn-warning', 'success-btn', 'btn-success');
+    crawlBtn.classList.add('btn-secondary');
+    
+    fetch('/api/crawl-chapters/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            book_id: parseInt(bookId),
+            max_chapters: 10,  // 默认爬取10章
+            chapter_numbers: chapterNumbers  // 如果指定了章节编号，则只爬取这些章节
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 检查是否全部爬取完成
+            if (data.all_crawled) {
+                crawlText.textContent = '已全部爬取';
+                crawlBtn.classList.remove('warning-btn', 'btn-warning', 'btn-secondary');
+                crawlBtn.classList.add('success-btn', 'btn-success');
+                crawlBtn.disabled = true;  // 全部爬取后禁用按钮
+                
+                // 显示提示信息
+                setTimeout(() => {
+                    alert('已全部爬取！');
+                }, 500);
+            } else {
+                crawlText.textContent = '爬取完成';
+                crawlBtn.classList.remove('warning-btn', 'btn-warning', 'btn-secondary');
+                crawlBtn.classList.add('success-btn', 'btn-success');
+                
+                // 显示爬取结果
+                const message = `成功爬取 ${data.chapters_crawled} 章\n` +
+                              `总章节: ${data.total_chapters}\n` +
+                              `已爬取: ${data.crawled_chapters}\n` +
+                              `未爬取: ${data.total_chapters - data.crawled_chapters}`;
+                
+                // 如果还有未爬取的章节，显示选择界面
+                if (data.crawled_chapters < data.total_chapters) {
+                    setTimeout(() => {
+                        showChapterSelectModal(bookId, data.total_chapters, data.crawled_chapters);
+                    }, 1000);
+                } else {
+                    alert(message);
+                }
+                
+                // 恢复按钮状态
+                setTimeout(() => {
+                    crawlBtn.disabled = false;
+                    crawlText.textContent = '继续爬取';
+                    crawlBtn.classList.remove('success-btn', 'btn-success');
+                    crawlBtn.classList.add('warning-btn', 'btn-warning');
+                }, 2000);
+            }
+            
+            // 刷新页面以显示新的章节
+            setTimeout(() => {
+                location.reload();
+            }, 3000);
+        } else {
+            alert('爬取失败：' + data.message);
+            // 恢复按钮状态
+            crawlBtn.disabled = false;
+            crawlText.textContent = '爬取章节内容';
+            crawlBtn.classList.remove('btn-secondary', 'success-btn', 'btn-success');
+            crawlBtn.classList.add('warning-btn', 'btn-warning');
+        }
+    })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('爬取失败，请重试');
+            // 恢复按钮状态
+            crawlBtn.disabled = false;
+            crawlText.textContent = '爬取章节内容';
+            crawlBtn.classList.remove('btn-secondary', 'success-btn', 'btn-success');
+            crawlBtn.classList.add('warning-btn', 'btn-warning');
+        });
+}
+
+// 显示章节选择模态框
+function showChapterSelectModal(bookId, totalChapters, crawledChapters) {
+    // 获取未爬取的章节列表
+    fetch(`/api/book/${bookId}/chapters/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.chapters) {
+                const uncrawledChapters = data.chapters.filter(ch => !ch.is_crawled);
+                
+                if (uncrawledChapters.length === 0) {
+                    alert('已全部爬取！');
+                    return;
+                }
+                
+                // 创建模态框
+                let modalHtml = `
+                    <div id="chapterSelectModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+                        <div style="background: white; padding: 2rem; border-radius: 8px; max-width: 600px; max-height: 80vh; overflow-y: auto;">
+                            <h3 style="margin-top: 0;">选择要爬取的章节</h3>
+                            <p>还有 ${uncrawledChapters.length} 章未爬取，请选择要爬取的章节：</p>
+                            <div style="max-height: 400px; overflow-y: auto; margin: 1rem 0;">
+                `;
+                
+                uncrawledChapters.forEach(chapter => {
+                    modalHtml += `
+                        <label style="display: block; padding: 0.5rem; border-bottom: 1px solid #eee;">
+                            <input type="checkbox" value="${chapter.number}" style="margin-right: 0.5rem;">
+                            第${chapter.number}章: ${chapter.title}
+                        </label>
+                    `;
+                });
+                
+                modalHtml += `
+                            </div>
+                            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                                <button onclick="selectAllChapters()" style="flex: 1; padding: 0.5rem; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">全选</button>
+                                <button onclick="confirmCrawlSelected()" style="flex: 1; padding: 0.5rem; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">确认爬取</button>
+                                <button onclick="closeChapterSelectModal()" style="flex: 1; padding: 0.5rem; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">取消</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+            }
+        });
+}
+
+// 全选章节
+function selectAllChapters() {
+    const checkboxes = document.querySelectorAll('#chapterSelectModal input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = true);
+}
+
+// 确认爬取选中的章节
+function confirmCrawlSelected() {
+    const checkboxes = document.querySelectorAll('#chapterSelectModal input[type="checkbox"]:checked');
+    const selectedChapters = Array.from(checkboxes).map(cb => parseInt(cb.value));
+    
+    if (selectedChapters.length === 0) {
+        alert('请至少选择一章');
+        return;
+    }
+    
+    closeChapterSelectModal();
+    crawlChapters(selectedChapters);
+}
+
+// 关闭章节选择模态框
+function closeChapterSelectModal() {
+    const modal = document.getElementById('chapterSelectModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// 页面加载时检查爬取状态
+document.addEventListener('DOMContentLoaded', function() {
+    checkCrawlStatus();
+});
+
+// 批量购买相关函数
+function showBulkPurchaseModal() {
+    document.getElementById('bulkPurchaseModal').classList.remove('hidden');
+    calculateFullBookPrice();
+}
+
+function hideBulkPurchaseModal() {
+    document.getElementById('bulkPurchaseModal').classList.add('hidden');
+    selectedBulkOption = null;
+    document.getElementById('confirmBulkPurchase').disabled = true;
+    // 重置自定义数量输入
+    document.getElementById('customChapterCount').value = 1;
+    updateCustomPrice();
+}
+
+let selectedBulkOption = null;
+
+function selectBulkOption(type, count, price, element) {
+    // 移除之前的选中状态
+    document.querySelectorAll('#bulkPurchaseModal .border-blue-300').forEach(el => {
+        el.classList.remove('border-blue-300', 'bg-blue-50');
+        el.classList.add('border-gray-200');
+    });
+    
+    // 添加选中状态
+    if (element) {
+        element.classList.remove('border-gray-200');
+        element.classList.add('border-blue-300', 'bg-blue-50');
+    }
+    
+    // 如果是自定义数量，获取当前输入值
+    if (type === 'custom') {
+        const customCount = parseInt(document.getElementById('customChapterCount').value) || 1;
+        const basePrice = 1.0;
+        const discountRate = calculateDiscountRate(customCount);
+        price = customCount * basePrice * discountRate;
+        count = customCount;
+    } else if (type === 'fixed') {
+        // 固定数量选项，需要重新计算价格
+        const basePrice = 1.0;
+        const discountRate = calculateDiscountRate(count);
+        price = count * basePrice * discountRate;
+    } else if (type === 'all') {
+        // 全本选项，根据剩余章节数量计算折扣
+        const chapterCount = parseInt(document.body.dataset.chapterCount);
+        const basePrice = 1.0;
+        
+        // 获取已购买的章节
+        const purchasedChaptersStr = document.body.dataset.purchasedChapters || '';
+        const purchasedChapters = purchasedChaptersStr ? new Set(purchasedChaptersStr.split(',').map(n => parseInt(n))) : new Set();
+        
+        // 计算剩余章节数量（从第3章开始，跳过已购买的）
+        let remainingChapters = 0;
+        for (let i = 3; i <= chapterCount; i++) {
+            if (!purchasedChapters.has(i)) {
+                remainingChapters++;
+            }
+        }
+        
+        // 根据剩余章节数量计算折扣
+        const discountRate = calculateDiscountRate(remainingChapters);
+        price = remainingChapters * basePrice * discountRate; // 根据数量计算折扣
+        count = remainingChapters;
+    }
+    
+    selectedBulkOption = { type, count, price };
+    document.getElementById('confirmBulkPurchase').disabled = false;
+}
+
+// 根据章节数量计算折扣率
+// 规则：10章9.5折，100章9折，500章8折，1000章7折
+function calculateDiscountRate(chapterCount) {
+    if (chapterCount >= 1000) {
+        return 0.7; // 7折
+    } else if (chapterCount >= 500) {
+        return 0.8; // 8折
+    } else if (chapterCount >= 100) {
+        return 0.9; // 9折
+    } else if (chapterCount >= 10) {
+        return 0.95; // 9.5折
+    } else {
+        return 1.0; // 无折扣
+    }
+}
+
+// 获取折扣描述
+function getDiscountText(chapterCount) {
+    const rate = calculateDiscountRate(chapterCount);
+    // rate是折扣率，例如0.9表示9折，0.95表示9.5折
+    const discount = rate * 10;
+    if (discount === 10) {
+        return '原价购买';
+    } else if (discount % 1 === 0) {
+        return `享受${discount.toFixed(0)}折优惠`;
+    } else {
+        return `享受${discount.toFixed(1)}折优惠`;
+    }
+}
+
+function calculateFullBookPrice() {
+    const bookTitle = document.body.dataset.bookTitle;
+    if (!bookTitle) return;
+    
+    // 获取书籍的章节总数
+    const chapterCount = parseInt(document.body.dataset.chapterCount);
+    const basePrice = 1.0; // 每章基础价格
+    
+    // 获取已购买的章节
+    const purchasedChaptersStr = document.body.dataset.purchasedChapters || '';
+    const purchasedChapters = purchasedChaptersStr ? new Set(purchasedChaptersStr.split(',').map(n => parseInt(n))) : new Set();
+    
+    // 计算10章价格（9.5折）
+    const price10 = 10 * basePrice * 0.95;
+    document.getElementById('price10').textContent = `¥${price10.toFixed(2)}`;
+    document.getElementById('originalPrice10').textContent = `原价¥${(10 * basePrice).toFixed(2)}`;
+    
+    // 计算100章价格（9折）
+    const price100 = 100 * basePrice * 0.9;
+    document.getElementById('price100').textContent = `¥${price100.toFixed(2)}`;
+    document.getElementById('originalPrice100').textContent = `原价¥${(100 * basePrice).toFixed(2)}`;
+    
+    // 计算500章价格（8折）
+    const price500 = 500 * basePrice * 0.8;
+    document.getElementById('price500').textContent = `¥${price500.toFixed(2)}`;
+    document.getElementById('originalPrice500').textContent = `原价¥${(500 * basePrice).toFixed(2)}`;
+    
+    // 计算1000章价格（7折）
+    const price1000 = 1000 * basePrice * 0.7;
+    document.getElementById('price1000').textContent = `¥${price1000.toFixed(2)}`;
+    document.getElementById('originalPrice1000').textContent = `原价¥${(1000 * basePrice).toFixed(2)}`;
+    
+    // 计算全本价格（根据剩余章节数量计算折扣）
+    // 从第3章开始（前2章免费），跳过已购买的章节
+    let remainingChapters = 0;
+    for (let i = 3; i <= chapterCount; i++) {
+        if (!purchasedChapters.has(i)) {
+            remainingChapters++;
+        }
+    }
+    
+    // 如果剩余章节为0，显示0
+    if (remainingChapters === 0) {
+        document.getElementById('fullBookPrice').textContent = `¥0.00`;
+        document.getElementById('fullBookOriginalPrice').textContent = `原价¥0.00`;
+        document.getElementById('discountAll').textContent = '已购买全部章节';
+    } else {
+        // 根据剩余章节数量计算折扣
+        const fullBookDiscountRate = calculateDiscountRate(remainingChapters);
+        const fullBookPrice = remainingChapters * basePrice * fullBookDiscountRate;
+        const fullBookOriginalPrice = remainingChapters * basePrice;
+        const fullBookPriceElement = document.getElementById('fullBookPrice');
+        const fullBookOriginalPriceElement = document.getElementById('fullBookOriginalPrice');
+        const discountAllElement = document.getElementById('discountAll');
+        
+        if (fullBookPriceElement) {
+            fullBookPriceElement.textContent = `¥${fullBookPrice.toFixed(2)}`;
+        }
+        if (fullBookOriginalPriceElement) {
+            fullBookOriginalPriceElement.textContent = `原价¥${fullBookOriginalPrice.toFixed(2)}`;
+            fullBookOriginalPriceElement.classList.add('line-through');
+        }
+        if (discountAllElement) {
+            discountAllElement.textContent = getDiscountText(remainingChapters);
+        }
+    }
+    
+    // 更新自定义价格
+    updateCustomPrice();
+}
+
+// 更新自定义数量的价格
+function updateCustomPrice() {
+    const customCount = parseInt(document.getElementById('customChapterCount').value) || 1;
+    const basePrice = 1.0;
+    const discountRate = calculateDiscountRate(customCount);
+    const customPrice = customCount * basePrice * discountRate;
+    const customOriginalPrice = customCount * basePrice;
+    
+    document.getElementById('customPrice').textContent = `¥${customPrice.toFixed(2)}`;
+    document.getElementById('customOriginalPrice').textContent = `原价¥${customOriginalPrice.toFixed(2)}`;
+    document.getElementById('customDiscount').textContent = getDiscountText(customCount);
+    
+    // 如果自定义数量被选中，更新选中状态
+    if (selectedBulkOption && selectedBulkOption.type === 'custom') {
+        selectedBulkOption.count = customCount;
+        selectedBulkOption.price = customPrice;
+    }
+}
+
+function confirmBulkPurchase() {
+    if (!selectedBulkOption) {
+        console.log('没有选择购买选项');
+        return;
+    }
+    
+    console.log('开始批量购买，选项:', selectedBulkOption);
+    
+    const bookTitle = document.body.dataset.bookTitle;
+    const crawlContent = document.getElementById('crawlContent').checked;
+    const purchaseMethod = document.querySelector('input[name="purchaseMethod"]:checked').value;
+    
+    console.log('购买参数:', { bookTitle, crawlContent, purchaseMethod });
+    
+    // 计算要购买的章节范围
+    let chaptersToProcess = [];
+    const chapterCount = parseInt(document.body.dataset.chapterCount);
+    const basePrice = 1.0;
+    
+    // 获取已购买的章节
+    const purchasedChaptersStr = document.body.dataset.purchasedChapters || '';
+    const purchasedChapters = purchasedChaptersStr ? new Set(purchasedChaptersStr.split(',').map(n => parseInt(n))) : new Set();
+    
+    // 从第3章开始计算（前2章免费），跳过已购买的章节
+    let startChapter = 3;
+    while (startChapter <= chapterCount && (startChapter <= 2 || purchasedChapters.has(startChapter))) {
+        startChapter++;
+    }
+    
+    if (selectedBulkOption.type === 'fixed') {
+        // 固定数量：10章、50章、100章
+        const targetCount = selectedBulkOption.count;
+        const discountRate = calculateDiscountRate(targetCount);
+        const pricePerChapter = basePrice * discountRate;
+        
+        for (let i = startChapter; i <= Math.min(startChapter + targetCount - 1, chapterCount); i++) {
+            chaptersToProcess.push({ chapter_number: i, price: pricePerChapter });
+        }
+    } else if (selectedBulkOption.type === 'custom') {
+        // 自定义数量
+        const targetCount = selectedBulkOption.count;
+        const discountRate = calculateDiscountRate(targetCount);
+        const pricePerChapter = basePrice * discountRate;
+        
+        for (let i = startChapter; i <= Math.min(startChapter + targetCount - 1, chapterCount); i++) {
+            chaptersToProcess.push({ chapter_number: i, price: pricePerChapter });
+        }
+    } else if (selectedBulkOption.type === 'all') {
+        // 全本批量（根据剩余章节数量计算折扣）
+        // 收集所有要购买的章节号（跳过已购买的）
+        const chaptersToBuy = [];
+        for (let i = startChapter; i <= chapterCount; i++) {
+            if (!purchasedChapters.has(i)) {
+                chaptersToBuy.push(i);
+            }
+        }
+        
+        // 根据实际要购买的章节数量计算折扣
+        const actualChapterCount = chaptersToBuy.length;
+        const discountRate = calculateDiscountRate(actualChapterCount);
+        const pricePerChapter = basePrice * discountRate; // 根据数量计算折扣
+        
+        // 为每个章节设置价格
+        for (let chapterNumber of chaptersToBuy) {
+            chaptersToProcess.push({ chapter_number: chapterNumber, price: pricePerChapter });
+        }
+    }
+    
+    if (chaptersToProcess.length === 0) {
+        alert('没有可购买的章节！');
+        return;
+    }
+    
+    // 显示进度区域
+    if (crawlContent) {
+        const progressArea = document.getElementById('crawlProgressArea');
+        if (progressArea) {
+            progressArea.classList.remove('hidden');
+            updateProgress(0, '正在处理购买请求...');
+        }
+    }
+    
+    if (purchaseMethod === 'cart') {
+        // 添加到购物车
+        addChaptersToCart(bookTitle, chaptersToProcess, crawlContent);
+    } else {
+        // 直接购买
+        directPurchaseChapters(bookTitle, chaptersToProcess, crawlContent);
+    }
+    
+    hideBulkPurchaseModal();
+}
+
+// 批量直接购买章节
+function directPurchaseChapters(bookTitle, chaptersToProcess, crawlContent) {
+    // 计算总金额
+    const totalAmount = chaptersToProcess.reduce((sum, chapter) => sum + chapter.price, 0);
+    
+    // 确认购买
+    if (!confirm(`确定要直接购买 ${chaptersToProcess.length} 个章节吗？总金额：¥${totalAmount.toFixed(2)}`)) {
+        return;
+    }
+    
+    // 发送批量直接购买请求
+    fetch('/api/bulk-direct-purchase/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            book_title: bookTitle,
+            chapters: chaptersToProcess,
+            crawl_content: crawlContent
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage(data.message, 'success');
+            
+            // 如果启用了爬取内容，开始监控进度
+            if (crawlContent && data.crawl_result) {
+                if (data.crawl_result.success) {
+                    updateProgress(100, '爬取完成！');
+                    setTimeout(() => {
+                        showMessage('章节内容爬取完成！', 'success');
+                        if (confirm('购买成功！是否查看订单详情？')) {
+                            window.location.href = '/orders/';
+                        }
+                    }, 2000);
+                } else {
+                    updateProgress(0, '爬取失败: ' + data.crawl_result.message);
+                    setTimeout(() => {
+                        if (confirm('购买成功！是否查看订单详情？')) {
+                            window.location.href = '/orders/';
+                        }
+                    }, 3000);
+                }
+            } else if (crawlContent) {
+                // 开始轮询进度
+                startProgressPolling(bookTitle);
+            } else {
+                setTimeout(() => {
+                    if (confirm('购买成功！是否查看订单详情？')) {
+                        window.location.href = '/orders/';
+                    }
+                }, 1000);
+            }
+        } else {
+            showMessage('批量购买失败: ' + data.message, 'error');
+            if (crawlContent) {
+                document.getElementById('crawlProgressArea').classList.add('hidden');
+            }
+        }
+    })
+    .catch(error => {
+        showMessage('批量购买失败: ' + error, 'error');
+        if (crawlContent) {
+            document.getElementById('crawlProgressArea').classList.add('hidden');
+        }
+    });
+}
+
+// 批量添加章节到购物车
+function addChaptersToCart(bookTitle, chaptersToAdd, crawlContent) {
+    let addedCount = 0;
+    let totalCount = chaptersToAdd.length;
+    
+    // 逐个添加章节到购物车
+    const addNextChapter = (index) => {
+        if (index >= chaptersToAdd.length) {
+            // 所有章节添加完成
+            if (crawlContent) {
+                updateProgress(100, '所有章节已添加到购物车！');
+                setTimeout(() => {
+                    showMessage(`成功添加 ${addedCount} 个章节到购物车！`, 'success');
+                    // 跳转到购物车页面
+                    setTimeout(() => {
+                        window.location.href = '/cart/';
+                    }, 2000);
+                }, 1000);
+            } else {
+                showMessage(`成功添加 ${addedCount} 个章节到购物车！`, 'success');
+                setTimeout(() => {
+                    window.location.href = '/cart/';
+                }, 1500);
+            }
+            return;
+        }
+        
+        const chapter = chaptersToAdd[index];
+        
+        // 更新进度
+        if (crawlContent) {
+            const progress = Math.round((index / totalCount) * 50); // 前50%用于添加
+            updateProgress(progress, `正在添加第${chapter.chapter_number}章到购物车...`);
+        }
+        
+        // 添加到购物车（使用新的CartItem API）
+        fetch('/api/cart/add/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                book_title: bookTitle,
+                chapter_number: chapter.chapter_number,
+                price: chapter.price
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                addedCount++;
+            } else {
+                console.log(`第${chapter.chapter_number}章添加失败:`, data.message);
+            }
+            
+            // 添加下一个章节
+            setTimeout(() => addNextChapter(index + 1), 200); // 200ms间隔
+        })
+        .catch(error => {
+            console.error(`第${chapter.chapter_number}章添加错误:`, error);
+            // 继续添加下一个章节
+            setTimeout(() => addNextChapter(index + 1), 200);
+        });
+    };
+    
+    // 开始添加第一个章节
+    addNextChapter(0);
+}
+
+// 更新进度显示
+function updateProgress(percentage, message) {
+    console.log('更新进度:', percentage + '%', message);
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const progressMessage = document.getElementById('progressMessage');
+    
+    if (progressBar) progressBar.style.width = percentage + '%';
+    if (progressText) progressText.textContent = percentage + '%';
+    if (progressMessage) progressMessage.textContent = message;
+}
+
+// 开始进度轮询
+function startProgressPolling(bookTitle) {
+    const pollInterval = setInterval(() => {
+        fetch('/api/crawl-status/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ book_title: bookTitle })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'completed') {
+                clearInterval(pollInterval);
+                updateProgress(100, '爬取完成！');
+                setTimeout(() => {
+                    showMessage('章节内容爬取完成！', 'success');
+                    location.reload();
+                }, 2000);
+            } else if (data.status === 'failed') {
+                clearInterval(pollInterval);
+                updateProgress(0, '爬取失败: ' + data.message);
+                setTimeout(() => location.reload(), 3000);
+            } else if (data.status === 'crawling') {
+                updateProgress(data.progress || 0, data.message || '正在爬取...');
+            }
+        })
+        .catch(error => {
+            console.error('获取进度失败:', error);
+            clearInterval(pollInterval);
+        });
+    }, 2000); // 每2秒轮询一次
+}
+
+// 从按钮直接购买章节
+function directPurchaseFromButton(button) {
+    const bookTitle = button.dataset.bookTitle;
+    const chapterNumber = parseInt(button.dataset.chapterNumber);
+    const price = parseFloat(button.dataset.price);
+    
+    // 检查用户是否登录 - 改进的检查逻辑
+    const username = document.body.dataset.username;
+    const userMenu = document.querySelector('.group button span')?.textContent?.trim();
+    
+    console.log('直接购买 - 登录状态检查:', {
+        username: username,
+        userMenu: userMenu,
+        dataset: document.body.dataset
+    });
+    
+    if (!username && !userMenu) {
+        showMessage('请先登录后再购买', 'error');
+        setTimeout(() => {
+            window.location.href = '/login/';
+        }, 1500);
+        return;
+    }
+    
+    // 检查是否为免费章节
+    if (chapterNumber <= 2) {
+        showMessage('前2章为免费章节，无需购买！', 'info');
+        return;
+    }
+    
+    // 确认购买
+    if (!confirm(`确定要直接购买《${bookTitle}》第${chapterNumber}章吗？价格：¥${price}`)) {
+        return;
+    }
+    
+    // 禁用按钮防止重复点击
+    button.disabled = true;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>购买中...</span>';
+    
+    // 发送直接购买请求
+    fetch('/api/direct-purchase/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            book_title: bookTitle,
+            chapter_number: chapterNumber,
+            price: price
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage(data.message, 'success');
+            // 更新按钮状态
+            button.innerHTML = '<i class="fas fa-check"></i><span>已购买</span>';
+            button.style.background = '#28a745';
+            button.disabled = true;
+            
+            // 更新页面上的购买状态显示
+            const chapterItem = button.closest('.chapter-item');
+            if (chapterItem) {
+                // 移除购买按钮
+                const purchaseButtons = chapterItem.querySelector('.purchase-buttons');
+                if (purchaseButtons) {
+                    purchaseButtons.style.display = 'none';
+                }
+                
+                // 添加已购买标签
+                const statusSection = chapterItem.querySelector('.chapter-status-section');
+                if (statusSection) {
+                    const purchasedTag = document.createElement('span');
+                    purchasedTag.className = 'status-tag purchased-tag';
+                    purchasedTag.textContent = '已购买';
+                    statusSection.appendChild(purchasedTag);
+                }
+            }
+            
+            // 询问是否查看订单
+            setTimeout(() => {
+                if (confirm('购买成功！是否查看订单详情？')) {
+                    window.location.href = '/orders/';
+                }
+            }, 1000);
+        } else {
+            showMessage(data.message, 'error');
+            // 恢复按钮状态
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('购买失败，请重试', 'error');
+        // 恢复按钮状态
+        button.disabled = false;
+        button.innerHTML = originalText;
+    });
+}
+
+// 添加整本书到购物车
+function addBookToCart(bookId, price, purchaseType = 'normal') {
+    // 检查用户是否登录
+    if (!document.body.dataset.username) {
+        showMessage('请先登录后再购买', 'error');
+        setTimeout(() => {
+            window.location.href = '/login/';
+        }, 1500);
+        return;
+    }
+    
+    fetch('/api/add-to-cart/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            book_id: bookId,
+            price: price,
+            purchase_type: purchaseType
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage(data.message, 'success');
+            // 更新购物车数量显示
+            updateCartCount();
+            
+            // 询问是否跳转到购物车
+            setTimeout(() => {
+                if (confirm('书籍已添加到购物车，是否前往购物车查看？')) {
+                    window.location.href = '/cart/';
+                }
+            }, 1000);
+        } else {
+            showMessage(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('添加到购物车失败，请重试', 'error');
+    });
+}
+
+// VIP用户支持作者购买功能
+function supportAuthor(bookId, price) {
+    // 检查用户是否登录
+    if (!document.body.dataset.username) {
+        showMessage('请先登录后再购买', 'error');
+        setTimeout(() => {
+            window.location.href = '/login/';
+        }, 1500);
+        return;
+    }
+    
+    // 确认购买
+    if (!confirm(`感谢您对作者的支持！\n购买价格：¥${price.toFixed(2)}\n\n确定要购买支持作者吗？`)) {
+        return;
+    }
+    
+    // 发送支持作者购买请求
+    fetch('/api/support-author/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            book_id: bookId,
+            price: price
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage(data.message, 'success');
+            
+            // 刷新页面以更新购买状态
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showMessage(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('购买失败，请重试', 'error');
+    });
+}
+
+// 从按钮添加章节到购物车（保留用于兼容性，但实际应该使用addBookToCart）
+function addToCartFromButton(button) {
+    const bookTitle = button.dataset.bookTitle;
+    const chapterNumber = parseInt(button.dataset.chapterNumber);
+    const price = parseFloat(button.dataset.price);
+    
+    // 检查用户是否登录
+    if (!document.body.dataset.username) {
+        showMessage('请先登录后再购买', 'error');
+        setTimeout(() => {
+            window.location.href = '/login/';
+        }, 1500);
+        return;
+    }
+    
+    // 检查是否为免费章节
+    if (chapterNumber <= 2) {
+        showMessage('前2章为免费章节，无需购买！', 'info');
+        return;
+    }
+    
+    // 提示用户购买整本书
+    showMessage('请购买整本书以查看所有章节', 'info');
+}
+
+// 添加到购物车功能
+function addToCart(bookTitle, chapterNumber, price) {
+    // 检查用户是否登录
+    if (!document.body.dataset.username) {
+        showMessage('请先登录后再购买', 'error');
+        setTimeout(() => {
+            window.location.href = '/login/';
+        }, 1500);
+        return;
+    }
+    
+    // 检查是否为免费章节
+    if (chapterNumber <= 2) {
+        showMessage('前2章为免费章节，无需购买！', 'info');
+        return;
+    }
+    
+    // 发送添加到购物车请求（使用新的CartItem API）
+    fetch('/api/cart/add/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            book_title: bookTitle,
+            chapter_number: chapterNumber,
+            price: price
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage(data.message, 'success');
+            // 更新购物车数量显示
+            updateCartCount();
+            // 更新按钮状态
+            updateBuyButton(bookTitle, chapterNumber);
+        } else {
+            showMessage(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('添加到购物车失败，请重试', 'error');
+    });
+}
+
+// 更新购买按钮状态
+function updateBuyButton(bookTitle, chapterNumber) {
+    const buyBtn = document.querySelector(`button[onclick*="${bookTitle}"][onclick*="${chapterNumber}"]`);
+    if (buyBtn) {
+        buyBtn.innerHTML = '<i class="fas fa-check"></i><span>已添加</span>';
+        buyBtn.style.background = '#28a745';
+        buyBtn.disabled = true;
+    }
+}
+
+// 更新购物车数量显示（直接调用API，避免递归）
+function updateCartCount() {
+    // 直接通过API更新，不调用任何其他函数，避免递归
+    fetch('/api/cart-count/')
+        .then(response => response.json())
+        .then(data => {
+            const cartRedDot = document.querySelector('#cart-red-dot');
+            if (cartRedDot) {
+                cartRedDot.style.display = data.count > 0 ? 'block' : 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching cart count:', error);
+        });
+}
+
+// 显示消息函数
+function showMessage(message, type) {
+    // 创建消息元素
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transition-all duration-300 ${
+        type === 'success' ? 'bg-green-500 text-white' : 
+        type === 'error' ? 'bg-red-500 text-white' : 
+        'bg-blue-500 text-white'
+    }`;
+    messageDiv.textContent = message;
+    
+    document.body.appendChild(messageDiv);
+    
+    // 3秒后自动移除
+    setTimeout(() => {
+        messageDiv.remove();
+    }, 3000);
+}
+
+// 评价表单处理
+document.addEventListener('DOMContentLoaded', function() {
+    // 直接初始化星星评分
+    initStarRating();
+    
+    // 初始化自动调整高度的文本域
+    initAutoResizeTextareas();
+    
+    const reviewForm = document.getElementById('reviewForm');
+    if (reviewForm) {
+        reviewForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitReview();
+        });
+    }
+    
+    // 编辑评价表单处理
+    const editReviewForm = document.getElementById('editReviewForm');
+    if (editReviewForm) {
+        editReviewForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            updateReview();
+        });
+    }
+    
+    // 使用事件委托处理按钮点击事件
+    document.addEventListener('click', function(e) {
+        const button = e.target.closest('[data-action]');
+        if (!button) return;
+        
+        const action = button.getAttribute('data-action');
+        const bookId = button.getAttribute('data-book-id');
+        const price = parseFloat(button.getAttribute('data-price')) || 0;
+        const purchaseType = button.getAttribute('data-purchase-type');
+        const reviewId = button.getAttribute('data-review-id');
+        const rating = parseInt(button.getAttribute('data-rating')) || 0;
+        const content = button.getAttribute('data-content') || '';
+        
+        if (action === 'add-to-cart' && bookId) {
+            e.preventDefault();
+            addBookToCart(parseInt(bookId), price, purchaseType || 'normal');
+        } else if (action === 'support-author' && bookId) {
+            e.preventDefault();
+            supportAuthor(parseInt(bookId), price);
+        } else if (action === 'purchase-directly' && bookId) {
+            e.preventDefault();
+            purchaseDirectly(parseInt(bookId), price);
+        } else if (action === 'edit-review' && reviewId) {
+            e.preventDefault();
+            editUserReview(reviewId, rating, content);
+        }
+    });
+});
+
+// 初始化自动调整高度的文本域
+function initAutoResizeTextareas() {
+    console.log('初始化自动调整高度的文本域...');
+    
+    const textareas = document.querySelectorAll('.auto-resize');
+    textareas.forEach(textarea => {
+        // 设置CSS变量
+        const minRows = parseInt(textarea.dataset.minRows) || 3;
+        const maxRows = parseInt(textarea.dataset.maxRows) || 10;
+        
+        textarea.style.setProperty('--min-rows', minRows);
+        textarea.style.setProperty('--max-rows', maxRows);
+        
+        // 完全禁用手动调整
+        textarea.style.resize = 'none';
+        textarea.setAttribute('resize', 'none');
+        
+        // 禁用拖拽调整
+        textarea.addEventListener('mousedown', function(e) {
+            // 只阻止拖拽调整大小的行为，不影响正常点击
+            if (e.target === textarea && e.which === 1) {
+                // 检查是否在调整大小的边缘区域
+                const rect = textarea.getBoundingClientRect();
+                const isResizeHandle = e.clientX > rect.right - 10 || e.clientY > rect.bottom - 10;
+                if (isResizeHandle) {
+                    e.preventDefault();
+                }
+            }
+        });
+        
+        // 禁用键盘调整
+        textarea.addEventListener('keydown', function(e) {
+            // 防止某些浏览器通过键盘调整大小
+            if (e.key === 'F11' || (e.altKey && e.key === 'Enter')) {
+                e.preventDefault();
+            }
+        });
+        
+        // 初始调整高度
+        adjustTextareaHeight(textarea);
+        
+        // 监听输入事件
+        textarea.addEventListener('input', function() {
+            adjustTextareaHeight(this);
+        });
+        
+        // 监听粘贴事件
+        textarea.addEventListener('paste', function() {
+            setTimeout(() => {
+                adjustTextareaHeight(this);
+            }, 10);
+        });
+        
+        // 监听内容变化（包括程序化修改）
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
+                    adjustTextareaHeight(textarea);
+                }
+            });
+        });
+        observer.observe(textarea, { attributes: true, attributeFilter: ['value'] });
+        
+        console.log('文本域初始化完成:', textarea.id, '- 已禁用手动调整');
+    });
+}
+
+// 调整文本域高度
+function adjustTextareaHeight(textarea) {
+    // 重置高度以获取正确的scrollHeight
+    textarea.style.height = 'auto';
+    
+    // 计算新高度
+    const minRows = parseInt(textarea.dataset.minRows) || 3;
+    const maxRows = parseInt(textarea.dataset.maxRows) || 10;
+    const lineHeight = parseFloat(getComputedStyle(textarea).lineHeight);
+    const padding = parseFloat(getComputedStyle(textarea).paddingTop) + 
+                   parseFloat(getComputedStyle(textarea).paddingBottom);
+    
+    const minHeight = lineHeight * minRows + padding;
+    const maxHeight = lineHeight * maxRows + padding;
+    
+    // 设置高度
+    const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
+    textarea.style.height = newHeight + 'px';
+    
+    // 如果内容超过最大高度，显示滚动条
+    if (textarea.scrollHeight > maxHeight) {
+        textarea.style.overflowY = 'auto';
+    } else {
+        textarea.style.overflowY = 'hidden';
+    }
+}
+
+// 初始化星星评分 - 直接在页面中定义
+function initStarRating() {
+    console.log('初始化星星评分...');
+    
+    // 评价表单的星星
+    const ratingInput = document.querySelector('.rating-input');
+    if (ratingInput) {
+        console.log('找到评价表单星星');
+        const stars = ratingInput.querySelectorAll('label');
+        console.log('星星数量:', stars.length);
+        
+        stars.forEach((star, index) => {
+            star.addEventListener('click', function(e) {
+                e.preventDefault();
+                const rating = index + 1;
+                console.log('点击了第', rating, '颗星');
+                
+                // 更新显示
+                updateStars(ratingInput, rating);
+                
+                // 选中radio按钮
+                const radio = ratingInput.querySelector(`input[value="${rating}"]`);
+                if (radio) {
+                    radio.checked = true;
+                    console.log('选中radio:', rating);
+                }
+            });
+        });
+    }
+    
+    // 编辑模态框的星星
+    const editRatingInput = document.querySelector('#editReviewModal .rating-input');
+    if (editRatingInput) {
+        console.log('找到编辑模态框星星');
+        const editStars = editRatingInput.querySelectorAll('label');
+        
+        editStars.forEach((star, index) => {
+            star.addEventListener('click', function(e) {
+                e.preventDefault();
+                const rating = index + 1;
+                console.log('编辑模态框点击了第', rating, '颗星');
+                
+                // 更新显示
+                updateStars(editRatingInput, rating);
+                
+                // 选中radio按钮
+                const radio = editRatingInput.querySelector(`input[value="${rating}"]`);
+                if (radio) {
+                    radio.checked = true;
+                }
+            });
+        });
+    }
+}
+
+// 更新星星显示
+function updateStars(container, rating) {
+    console.log('更新星星显示:', rating);
+    const stars = container.querySelectorAll('label');
+    
+    stars.forEach((star, index) => {
+        if (index < rating) {
+            star.style.color = '#fbbf24'; // 金色
+            star.classList.add('active');
+        } else {
+            star.style.color = '#d1d5db'; // 灰色
+            star.classList.remove('active');
+        }
+    });
+    
+    console.log('星星更新完成，应该亮起', rating, '颗星');
+}
+
+// 提交评价
+function submitReview() {
+    const rating = document.querySelector('input[name="rating"]:checked');
+    const content = document.getElementById('reviewContent').value.trim();
+    
+    // 验证输入
+    if (!rating) {
+        showMessage('请选择评分', 'error');
+        return;
+    }
+    
+    if (!content) {
+        showMessage('请输入评价内容', 'error');
+        return;
+    }
+    
+    if (content.length < 10) {
+        showMessage('评价内容至少需要10个字符', 'error');
+        return;
+    }
+    
+    // 检查用户是否登录
+    const username = document.body.dataset.username;
+    if (!username) {
+        showMessage('请先登录后再评价', 'error');
+        setTimeout(() => {
+            window.location.href = '/login/';
+        }, 1500);
+        return;
+    }
+    
+    // 准备提交数据
+    const formData = {
+        book_title: document.body.dataset.bookTitle,
+        rating: parseInt(rating.value),
+        review_content: content
+    };
+    
+    // 显示加载状态
+    const submitBtn = document.querySelector('#reviewForm .submit-btn');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = '提交中...';
+    submitBtn.disabled = true;
+    
+    // 防止重复提交
+    if (submitBtn.dataset.submitting === 'true') {
+        return;
+    }
+    submitBtn.dataset.submitting = 'true';
+    
+    // 发送评价请求
+    fetch('/api/submit-review/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        // 重置提交状态
+        submitBtn.dataset.submitting = 'false';
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+        
+        if (data.success) {
+            showMessage('评价提交成功！', 'success');
+            // 更新评分显示
+            if (data.rating !== undefined) {
+                updateBookRating(data.rating);
+            }
+            // 清空表单
+            const reviewForm = document.getElementById('reviewForm');
+            if (reviewForm) {
+                reviewForm.reset();
+                // 重置星星显示
+                const ratingInput = reviewForm.querySelector('.rating-input');
+                if (ratingInput) {
+                    updateStars(ratingInput, 0);
+                }
+            }
+            // 刷新页面以显示新评价，保持在评论标签页的第一页
+            setTimeout(() => {
+                const currentUrl = new URL(window.location);
+                currentUrl.searchParams.set('review_page', '1');
+                currentUrl.hash = '#tab-reviews';
+                window.location.href = currentUrl.toString();
+            }, 1500);
+        } else {
+            showMessage(data.message || '评价提交失败', 'error');
+        }
+    })
+    .catch(error => {
+        // 重置提交状态
+        submitBtn.dataset.submitting = 'false';
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+        
+        console.error('Error:', error);
+        showMessage('网络错误，请重试', 'error');
+    });
+}
+
+// 编辑评价（从评论列表中）
+function editReview(reviewId) {
+    // 获取评价数据
+    const reviewItem = document.querySelector(`[data-review-id="${reviewId}"]`);
+    if (!reviewItem) {
+        showMessage('评价不存在', 'error');
+        return;
+    }
+    
+    // 获取评价内容
+    const reviewContent = reviewItem.querySelector('.review-content').textContent.trim();
+    const ratingStars = reviewItem.querySelectorAll('.rating-display .fas.fa-star');
+    const rating = ratingStars.length;
+    
+    // 调用通用编辑函数
+    editUserReview(reviewId, rating, reviewContent);
+}
+
+// 编辑用户评价（通用函数，支持从不同位置调用）
+function editUserReview(reviewId, rating, reviewContent) {
+    if (!reviewId) {
+        showMessage('评价ID不能为空', 'error');
+        return;
+    }
+    
+    console.log('编辑评价，ID:', reviewId, '评分:', rating);
+    
+    // 填充编辑表单
+    document.getElementById('editReviewContent').value = reviewContent || '';
+    
+    // 设置评分
+    if (rating) {
+        const ratingInput = document.querySelector(`input[name="edit_rating"][value="${rating}"]`);
+        if (ratingInput) {
+            ratingInput.checked = true;
+        }
+        
+        // 更新星星显示
+        const editRatingInput = document.querySelector('#editReviewModal .rating-input');
+        if (editRatingInput) {
+            updateStars(editRatingInput, rating);
+        }
+    }
+    
+    // 存储评价ID
+    document.getElementById('editReviewForm').dataset.reviewId = reviewId;
+    
+    // 显示模态框
+    document.getElementById('editReviewModal').classList.remove('hidden');
+}
+
+// 隐藏编辑评价模态框
+function hideEditReviewModal() {
+    document.getElementById('editReviewModal').classList.add('hidden');
+    document.getElementById('editReviewForm').reset();
+    delete document.getElementById('editReviewForm').dataset.reviewId;
+}
+
+// 更新评价
+function updateReview() {
+    const reviewId = document.getElementById('editReviewForm').dataset.reviewId;
+    const rating = document.querySelector('input[name="edit_rating"]:checked');
+    const content = document.getElementById('editReviewContent').value.trim();
+    
+    // 验证输入
+    if (!rating) {
+        showMessage('请选择评分', 'error');
+        return;
+    }
+    
+    if (!content) {
+        showMessage('请输入评价内容', 'error');
+        return;
+    }
+    
+    if (content.length < 10) {
+        showMessage('评价内容至少需要10个字符', 'error');
+        return;
+    }
+    
+    // 检查用户是否登录
+    const username = document.body.dataset.username;
+    if (!username) {
+        showMessage('请先登录后再评价', 'error');
+        setTimeout(() => {
+            window.location.href = '/login/';
+        }, 1500);
+        return;
+    }
+    
+    // 准备提交数据
+    const formData = {
+        review_id: parseInt(reviewId),
+        rating: parseInt(rating.value),
+        review_content: content
+    };
+    
+    // 显示加载状态
+    const submitBtn = document.querySelector('#editReviewForm button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = '更新中...';
+    submitBtn.disabled = true;
+    
+    // 发送更新请求
+    fetch('/api/edit-review/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('评价更新成功！', 'success');
+            hideEditReviewModal();
+            // 刷新页面以显示更新后的评价，保持在评论标签页和当前分页
+            setTimeout(() => {
+                const currentUrl = new URL(window.location);
+                const reviewPage = currentUrl.searchParams.get('review_page') || '1';
+                currentUrl.searchParams.set('review_page', reviewPage);
+                currentUrl.hash = '#tab-reviews';
+                window.location.href = currentUrl.toString();
+            }, 1500);
+        } else {
+            showMessage(data.message || '评价更新失败', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('网络错误，请重试', 'error');
+    })
+    .finally(() => {
+        // 恢复按钮状态
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// 删除评价
+function deleteReview(reviewId) {
+    if (!confirm('确定要删除这条评价吗？删除后无法恢复。')) {
+        return;
+    }
+    
+    // 检查用户是否登录
+    const username = document.body.dataset.username;
+    if (!username) {
+        showMessage('请先登录', 'error');
+        setTimeout(() => {
+            window.location.href = '/login/';
+        }, 1500);
+        return;
+    }
+    
+    // 准备提交数据
+    const formData = {
+        review_id: parseInt(reviewId)
+    };
+    
+    // 发送删除请求
+    fetch('/api/delete-review/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('评价删除成功！', 'success');
+            // 刷新页面以显示更新后的评价列表，保持在评论标签页
+            // 如果删除后当前页没有评价了，跳转到上一页或第一页
+            setTimeout(() => {
+                const currentUrl = new URL(window.location);
+                let reviewPage = parseInt(currentUrl.searchParams.get('review_page')) || 1;
+                // 如果当前页是第一页或没有评价了，保持在第一页
+                if (reviewPage > 1) {
+                    // 可以尝试保持当前页，但如果该页没有评价了，Django会自动跳转到最后一页
+                    currentUrl.searchParams.set('review_page', reviewPage);
+                } else {
+                    currentUrl.searchParams.set('review_page', '1');
+                }
+                currentUrl.hash = '#tab-reviews';
+                window.location.href = currentUrl.toString();
+            }, 1500);
+        } else {
+            showMessage(data.message || '评价删除失败', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('网络错误，请重试', 'error');
+    });
+}
+
+</script>
+
+<script>
+// 整本购买模式的JavaScript函数
+
+// 直接购买整本书籍
+function purchaseDirectly(bookId, price) {
+    if (!confirm(`确认立即购买这本书吗？价格：¥${price}`)) {
+        return;
+    }
+    
+    fetch('/api/purchase-book-directly/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            book_id: bookId,
+            price: price,
+            purchase_type: 'normal'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage(data.message, 'success');
+            // 刷新页面以更新购买状态
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            showMessage(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('购买失败，请重试', 'error');
+    });
+}
+
+
+// 更新购物车数量显示
+function updateCartCount() {
+    fetch('/api/get-cart-count/')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const cartCountElements = document.querySelectorAll('.cart-count');
+            cartCountElements.forEach(element => {
+                element.textContent = data.count;
+                element.style.display = data.count > 0 ? 'inline' : 'none';
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error updating cart count:', error);
+    });
+}
+
+// 获取CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// VIP充值相关函数
+// 显示VIP充值模态框
+function showVipRechargeModal() {
+    document.getElementById('vipRechargeModal').classList.remove('hidden');
+    // 重置选择
+    document.querySelectorAll('.vip-package').forEach(pkg => {
+        pkg.querySelector('div').classList.remove('border-blue-500', 'bg-blue-50');
+        pkg.querySelector('div').classList.add('border-gray-200');
+    });
+    document.getElementById('selectedPackageInfo').classList.add('hidden');
+    document.getElementById('confirmRechargeBtn').disabled = true;
+}
+
+// 隐藏VIP充值模态框
+function hideVipRechargeModal() {
+    document.getElementById('vipRechargeModal').classList.add('hidden');
+}
+
+// 选择VIP套餐
+function selectVipPackage(element) {
+    // 移除所有选中状态
+    document.querySelectorAll('.vip-package').forEach(pkg => {
+        pkg.querySelector('div').classList.remove('border-blue-500', 'bg-blue-50');
+        pkg.querySelector('div').classList.add('border-gray-200');
+    });
+    
+    // 设置当前选中状态
+    const packageDiv = element.querySelector('div');
+    packageDiv.classList.remove('border-gray-200');
+    packageDiv.classList.add('border-blue-500', 'bg-blue-50');
+    
+    // 显示选中信息
+    const duration = element.getAttribute('data-duration');
+    const price = element.getAttribute('data-price');
+    
+    let durationText = '';
+    if (duration === '1') {
+        durationText = '1个月';
+    } else if (duration === '3') {
+        durationText = '3个月';
+    } else if (duration === '12') {
+        durationText = '1年';
+    }
+    
+    document.getElementById('selectedPackageText').textContent = durationText;
+    document.getElementById('selectedPackagePrice').textContent = '¥' + parseFloat(price).toFixed(2);
+    document.getElementById('selectedPackageInfo').classList.remove('hidden');
+    document.getElementById('confirmRechargeBtn').disabled = false;
+    
+    // 保存选中的套餐信息
+    element.setAttribute('data-selected', 'true');
+}
+
+// 确认VIP充值
+function confirmVipRecharge() {
+    const selectedPackage = document.querySelector('.vip-package[data-selected="true"]');
+    if (!selectedPackage) {
+        alert('请选择充值套餐');
+        return;
+    }
+    
+    const duration = selectedPackage.getAttribute('data-duration');
+    const price = parseFloat(selectedPackage.getAttribute('data-price'));
+    
+    if (confirm(`确认充值VIP ${duration === '1' ? '1个月' : duration === '3' ? '3个月' : '1年'}，需支付¥${price.toFixed(2)}吗？`)) {
+        // 发送充值请求
+        const formData = new FormData();
+        formData.append('duration', duration);
+        formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+        
+        fetch('{% url "vip_recharge" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage(data.message, 'success');
+                hideVipRechargeModal();
+                // 刷新页面以更新VIP状态和余额
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showMessage(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('充值失败，请重试', 'error');
+        });
+    }
+}
+</script>
+
+<!-- VIP充值模态框 -->
+<div id="vipRechargeModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-10 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-medium text-gray-900 flex items-center">
+                    <i class="fas fa-crown text-yellow-500 mr-2"></i> VIP充值
+                </h3>
+                <button onclick="hideVipRechargeModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-6">
+                <!-- 当前余额显示 -->
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-gray-700">当前余额：</span>
+                        <span class="text-lg font-bold text-blue-600">¥{{ user_profile.balance|default:"0.00" }}</span>
+                    </div>
+                </div>
+                
+                <!-- VIP套餐选择 -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">选择充值时长</label>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- 1个月套餐 -->
+                        <div class="vip-package" data-duration="1" data-price="20.00" onclick="selectVipPackage(this)">
+                            <div class="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-500 transition-colors">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-gray-900 mb-1">1个月</div>
+                                    <div class="text-xl font-bold text-blue-600 mb-2">¥20.00</div>
+                                    <div class="text-xs text-gray-500">原价</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 3个月套餐 -->
+                        <div class="vip-package" data-duration="3" data-price="54.00" onclick="selectVipPackage(this)">
+                            <div class="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-500 transition-colors">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-gray-900 mb-1">3个月</div>
+                                    <div class="text-xl font-bold text-blue-600 mb-1">¥54.00</div>
+                                    <div class="text-xs text-gray-500 line-through mb-1">¥60.00</div>
+                                    <div class="text-xs text-green-600 font-medium">9折优惠</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 1年套餐 -->
+                        <div class="vip-package" data-duration="12" data-price="192.00" onclick="selectVipPackage(this)">
+                            <div class="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-500 transition-colors">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-gray-900 mb-1">1年</div>
+                                    <div class="text-xl font-bold text-blue-600 mb-1">¥192.00</div>
+                                    <div class="text-xs text-gray-500 line-through mb-1">¥240.00</div>
+                                    <div class="text-xs text-green-600 font-medium">8折优惠</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 选中的套餐信息 -->
+                <div id="selectedPackageInfo" class="hidden bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="text-sm font-medium text-gray-700">已选择：</span>
+                            <span id="selectedPackageText" class="text-sm font-bold text-gray-900"></span>
+                        </div>
+                        <div>
+                            <span class="text-sm font-medium text-gray-700">需支付：</span>
+                            <span id="selectedPackagePrice" class="text-lg font-bold text-yellow-600"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 操作按钮 -->
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="hideVipRechargeModal()" class="px-6 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                        取消
+                    </button>
+                    <button type="button" id="confirmRechargeBtn" onclick="confirmVipRecharge()" class="px-6 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors" disabled>
+                        <i class="fas fa-crown mr-2"></i> 确认充值
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+

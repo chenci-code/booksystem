@@ -1,0 +1,2499 @@
+/* 管理员界面样式 - 版本 3.0 - 现代渐变主题优化 */
+
+/* 管理员导航区域 */
+.admin-nav-section {
+    margin-bottom: 2rem !important;
+    background: white !important;
+    border-radius: 16px !important;
+    padding: 2rem !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid #f1f5f9 !important;
+}
+
+.admin-nav-header {
+    margin-bottom: 1.5rem !important;
+    padding-bottom: 1rem !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.admin-nav-header h1 {
+    color: #1e293b !important;
+    margin-bottom: 0.5rem !important;
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+}
+
+.admin-nav-header p {
+    color: #64748b !important;
+    margin: 0 !important;
+    font-size: 1rem !important;
+}
+
+.admin-nav-options {
+    display: flex !important;
+    gap: 0.75rem !important;
+    flex-wrap: wrap !important;
+}
+
+.admin-nav-option {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    padding: 0.875rem 1.25rem !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    color: #475569 !important;
+    text-decoration: none !important;
+    transition: all 0.3s ease !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.admin-nav-option::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.admin-nav-option:hover::before {
+    left: 100%;
+}
+
+.admin-nav-option:hover {
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+    text-decoration: none !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    border-color: #cbd5e1 !important;
+}
+
+.admin-nav-option.active {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+    color: white !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+}
+
+.admin-nav-option.active:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4) !important;
+}
+
+.admin-nav-option i {
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.admin-nav-option:hover i {
+    transform: scale(1.1);
+}
+
+/* 悬停动画效果 - 白色主题 */
+.admin-nav-option:hover {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+.admin-nav-option.active:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* 装饰性背景动画 */
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-10px) rotate(5deg);
+    }
+}
+
+.admin-nav-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    opacity: 0.6;
+    animation: float 6s ease-in-out infinite;
+}
+
+.admin-nav-section::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -10%;
+    width: 150px;
+    height: 150px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    opacity: 0.8;
+    animation: float 8s ease-in-out infinite reverse;
+}
+
+/* 统计卡片 */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    line-height: 1;
+}
+
+.stat-label {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.stat-change {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.stat-change.positive {
+    color: #10b981;
+}
+
+.stat-change.negative {
+    color: #ef4444;
+}
+
+/* 可视化区域 */
+.visualization-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.chart-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.chart-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.chart-action-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f3f4f6;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.chart-action-btn:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+/* 图表容器样式 */
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin-bottom: 1rem;
+}
+
+.chart-legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: #f8fafc;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.legend-item:hover {
+    background: #f1f5f9;
+    transform: translateY(-1px);
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.legend-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    flex: 1;
+}
+
+.legend-value {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    background: #e5e7eb;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+}
+
+/* 图表卡片增强样式 */
+.chart-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+}
+
+.chart-card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.chart-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.chart-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.chart-action-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f3f4f6;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.chart-action-btn:hover {
+    background: #e5e7eb;
+    color: #374151;
+    transform: scale(1.05);
+}
+
+.chart-action-btn i.fa-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 订单状态统计 */
+.order-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.order-status-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.status-indicator.status-待发货 {
+    background: #f59e0b;
+}
+
+.status-indicator.status-已发货 {
+    background: #3b82f6;
+}
+
+.status-indicator.status-已取消 {
+    background: #ef4444;
+}
+
+.status-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex: 1;
+}
+
+.status-name {
+    font-weight: 500;
+    color: #374151;
+}
+
+.status-count {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+/* 活动区域 */
+.activity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.activity-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+
+.activity-header {
+    padding: 1.5rem 1.5rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.activity-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.activity-more {
+    color: #3b82f6;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.activity-more:hover {
+    color: #1d4ed8;
+    text-decoration: none;
+}
+
+.activity-content {
+    padding: 1rem 1.5rem 1.5rem;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.activity-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.activity-main {
+    font-weight: 500;
+    color: #1f2937;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.activity-sub {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-top: 0.125rem;
+}
+
+.activity-time {
+    color: #9ca3af;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
+.activity-empty {
+    text-align: center;
+    padding: 2rem;
+    color: #9ca3af;
+}
+
+.activity-empty i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+/* 内容区域 */
+.admin-content-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+
+.content-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.content-title h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.content-count {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-left: 0.5rem;
+}
+
+.content-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.view-toggle {
+    display: flex;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.view-btn {
+    padding: 0.5rem 0.75rem;
+    border: none;
+    background: white;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.view-btn:hover {
+    background: #f9fafb;
+    color: #374151;
+}
+
+.view-btn.active {
+    background: #3b82f6;
+    color: white;
+}
+
+/* 书籍网格 */
+.books-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+.book-admin-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.book-admin-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.book-cover-admin {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.cover-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.no-cover {
+    width: 100%;
+    height: 100%;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    font-size: 2rem;
+}
+
+.book-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.book-admin-card:hover .book-overlay {
+    opacity: 1;
+}
+
+.book-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn-small {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-btn-small:hover {
+    background: white;
+    transform: scale(1.1);
+}
+
+.action-btn-small.delete {
+    color: #ef4444;
+}
+
+.book-info-admin {
+    padding: 1rem;
+}
+
+.book-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.book-author {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin: 0 0 0.75rem 0;
+}
+
+.book-meta {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.meta-item i {
+    font-size: 0.625rem;
+}
+
+.meta-item.status-连载中 {
+    color: #3b82f6;
+}
+
+.meta-item.status-完结 {
+    color: #10b981;
+}
+
+.meta-item.status-暂停 {
+    color: #f59e0b;
+}
+
+.book-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+/* 表格样式 */
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.admin-table th {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.admin-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.table-cover {
+    width: 40px;
+    height: 60px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.table-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.no-cover-small {
+    width: 100%;
+    height: 100%;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+}
+
+.book-title-cell {
+    font-weight: 500;
+    color: #1f2937;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.category-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background: #e0e7ff;
+    color: #3730a3;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-badge.status-连载中 {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-badge.status-完结 {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge.status-暂停 {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-badge.status-正常 {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge.status-禁用 {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-badge.status-待发货 {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-badge.status-已发货 {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+
+.status-badge.status-已取消 {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.rating-display {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.table-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.table-action-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f3f4f6;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.table-action-btn:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.table-action-btn.delete {
+    color: #ef4444;
+}
+
+.table-action-btn.delete:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.table-action-btn.ship {
+    color: #3b82f6;
+}
+
+.table-action-btn.ship:hover {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.table-action-btn.complete {
+    color: #10b981;
+}
+
+.table-action-btn.complete:hover {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.table-action-btn.cancel {
+    color: #ef4444;
+}
+
+.table-action-btn.cancel:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* 搜索表单 */
+.search-form {
+    display: flex;
+    align-items: center;
+}
+
+.search-input-group {
+    display: flex;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    overflow: hidden;
+    background: white;
+}
+
+.search-input {
+    border: none;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    outline: none;
+    min-width: 200px;
+}
+
+.search-btn {
+    border: none;
+    background: #3b82f6;
+    color: white;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.search-btn:hover {
+    background: #1d4ed8;
+}
+
+/* 分页 */
+.pagination-nav {
+    padding: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.page-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    color: #6b7280;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.page-link:hover {
+    background: #f9fafb;
+    color: #374151;
+    text-decoration: none;
+}
+
+.page-link.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+/* 空状态 */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #9ca3af;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.empty-state h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #6b7280;
+    margin: 0 0 0.5rem 0;
+}
+
+.empty-state p {
+    margin: 0 0 1.5rem 0;
+}
+
+.empty-row {
+    padding: 0;
+}
+
+/* 模态框 */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-content.large {
+    max-width: 800px;
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.modal-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f3f4f6;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.modal-body {
+    padding: 1.5rem;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.modal-footer {
+    padding: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+/* 表单样式 */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* 按钮样式 */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1d4ed8;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: #6b7280;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #4b5563;
+    color: white;
+    text-decoration: none;
+}
+
+/* 用户相关样式 */
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    font-size: 1.25rem;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-info .name {
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.user-info .id {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.balance-display {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-weight: 500;
+}
+
+.count-badge {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    background: #f3f4f6;
+    color: #6b7280;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.users-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+.user-admin-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.user-admin-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.user-card-header {
+    padding: 1.5rem 1.5rem 0;
+    text-align: center;
+    position: relative;
+}
+
+.user-avatar-large {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    font-size: 2rem;
+    margin: 0 auto;
+}
+
+.user-status-indicator {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.user-card-body {
+    padding: 1rem 1.5rem;
+    text-align: center;
+}
+
+.user-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 0.25rem 0;
+}
+
+.user-username {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin: 0 0 1rem 0;
+}
+
+.user-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 1rem;
+}
+
+.user-meta {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.user-card-actions {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.card-action-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: #f3f4f6;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.card-action-btn:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+/* 订单相关样式 */
+.order-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.order-stat-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.order-stat-card.pending .stat-icon {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.order-stat-card.shipped .stat-icon {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+
+.order-stat-card.cancelled .stat-icon {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.order-number {
+    display: flex;
+    flex-direction: column;
+}
+
+.order-number .number {
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.order-number .id {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.customer-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.customer-info .name {
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.customer-info .books-count {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.order-books {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.book-title {
+    font-size: 0.875rem;
+    color: #374151;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+
+.more-books {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.no-books {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.order-amount {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.batch-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.batch-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid #d1d5db;
+    background: white;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.batch-btn:hover:not(:disabled) {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+.batch-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 下拉菜单 */
+.dropdown {
+    position: relative;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    min-width: 120px;
+    z-index: 10;
+    display: none;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-menu a {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    color: #374151;
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: background 0.2s ease;
+}
+
+.dropdown-menu a:hover {
+    background: #f9fafb;
+    text-decoration: none;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .admin-nav-section {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .admin-nav-header {
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+    }
+
+    .admin-nav-header h1 {
+        font-size: 1.75rem;
+    }
+
+    .admin-nav-header p {
+        font-size: 0.875rem;
+    }
+
+    .admin-nav-options {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .admin-nav-option {
+        justify-content: center;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .visualization-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .activity-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .books-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .users-grid {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+    }
+
+    .order-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .content-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .batch-actions {
+        flex-wrap: wrap;
+    }
+
+    .admin-table {
+        font-size: 0.875rem;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 0.75rem 0.5rem;
+    }
+
+    .modal-content {
+        width: 95%;
+        margin: 1rem;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-nav-section {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .admin-nav-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .admin-nav-header p {
+        font-size: 0.8rem;
+    }
+
+    .admin-nav-option {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.8rem;
+    }
+
+    .admin-nav-option i {
+        font-size: 0.875rem;
+    }
+
+    .order-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .table-actions {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .table-action-btn {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+/* 数字
+内容订单样式 */
+.order-chapters {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.chapter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.chapter-item .book-title {
+    font-weight: 500;
+    color: #1f2937;
+    font-size: 0.875rem;
+}
+
+.chapter-item .chapter-title {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.more-chapters {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.no-chapters {
+    color: #9ca3af;
+    font-style: italic;
+    font-size: 0.875rem;
+}
+
+/* 订单状态样式更新 */
+.status-badge.status-待支付 {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-badge.status-已支付 {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+
+.status-badge.status-已取消 {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* 操作按钮样式 */
+.table-action-btn.confirm {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.table-action-btn.confirm:hover {
+    background: #bfdbfe;
+}
+
+.table-action-btn.complete {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.table-action-btn.complete:hover {
+    background: #a7f3d0;
+}
+
+/*
+ 首页推荐区域样式 */
+.rotating-books-section,
+.collaborative-books-section,
+.high-rated-books-section {
+    position: relative;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    z-index: 10;
+    border-radius: 12px;
+}
+
+/* 书籍卡片增强样式 */
+.book-card {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.book-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.book-cover {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.book-cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.book-card:hover .book-cover-img {
+    transform: scale(1.05);
+}
+
+.no-cover {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 2rem;
+}
+
+/* 徽章样式 */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+    margin-right: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.badge.bg-secondary {
+    background-color: #6b7280;
+    color: white;
+}
+
+.badge.bg-info {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.badge.bg-success {
+    background-color: #10b981;
+    color: white;
+}
+
+/* 文本截断 */
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
+    /* 标准属性 */
+    overflow: hidden;
+}
+
+/* 推荐标签样式 */
+.recommendation-tag {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: linear-gradient(45deg, #ff6b6b, #feca57);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    z-index: 5;
+}
+
+/* 动画效果 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .book-card {
+        margin-bottom: 1rem;
+    }
+
+    .book-cover {
+        height: 160px;
+    }
+
+    .recommendation-tag {
+        font-size: 0.625rem;
+        padding: 0.125rem 0.375rem;
+    }
+}
+
+/* 加载动画 */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* 渐变文字 */
+.gradient-text {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* 按钮样式增强 */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-outline-primary {
+    border-color: #667eea;
+    color: #667eea;
+    background: transparent;
+}
+
+.btn-outline-primary:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.125rem;
+}
+
+/* 
+购买内容样式 - 与订单详情中的购买书籍样式完全一致 */
+.purchase-content {
+    background: #f9fafb;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    max-width: 300px;
+    position: relative;
+}
+
+.purchase-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.purchase-title {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 0.875rem;
+}
+
+.total-price {
+    font-weight: 600;
+    color: #059669;
+    font-size: 0.875rem;
+}
+
+/* 书籍项样式 - 与订单详情完全一致 */
+.book-item-summary,
+.book-item-expanded {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    border: 1px solid #f3f4f6;
+    transition: all 0.2s ease;
+}
+
+.book-item-summary:hover,
+.book-item-expanded:hover {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.book-main-info,
+.book-info-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.book-title {
+    font-weight: 500;
+    color: #1f2937;
+    font-size: 0.875rem;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.book-author {
+    font-size: 0.75rem;
+    color: #6b7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.book-category {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.book-price-info,
+.book-price-detail {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 60px;
+    flex-shrink: 0;
+}
+
+.book-price {
+    font-weight: 600;
+    color: #059669;
+    font-size: 0.875rem;
+}
+
+/* 展开/收起功能样式 */
+.purchase-content-container {
+    position: relative;
+}
+
+.expand-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #3b82f6;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    background: transparent;
+    border: none;
+}
+
+.expand-trigger:hover {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.expand-trigger i {
+    transition: transform 0.2s ease;
+}
+
+.expanded-content {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 0.5rem;
+    margin-top: 0.25rem;
+}
+
+.expanded-content .book-item-expanded:last-child {
+    margin-bottom: 0;
+}
+
+/* 无书籍信息样式 */
+.no-books {
+    color: #9ca3af;
+    font-style: italic;
+    font-size: 0.875rem;
+    text-align: center;
+    padding: 1rem;
+}
+
+/* 订单详情中的购买书籍样式 - 确保一致性 */
+.order-books {
+    background: #f9fafb;
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+
+.order-books h4 {
+    margin: 0 0 1rem 0;
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.books-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.books-list .book-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: white;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    border: 1px solid #f3f4f6;
+    transition: all 0.2s ease;
+}
+
+.books-list .book-item:hover {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.books-list .book-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.books-list .book-title {
+    font-weight: 500;
+    color: #1f2937;
+    font-size: 0.875rem;
+}
+
+.books-list .book-author {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.books-list .book-category {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.books-list .book-price {
+    font-weight: 600;
+    color: #059669;
+    font-size: 0.875rem;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .purchase-content {
+        max-width: 100%;
+    }
+
+    .book-title,
+    .book-author,
+    .book-category {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: initial;
+    }
+
+    .expanded-content {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90%;
+        max-width: 400px;
+        max-height: 70vh;
+    }
+}
+
+/* 展
+开内容动画效果 */
+.expanded-content {
+    transition: all 0.3s ease;
+    transform-origin: top;
+}
+
+.expanded-content.show {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+}
+
+.expanded-content.hide {
+    opacity: 0;
+    transform: translateY(-10px) scaleY(0.95);
+}
+
+/* 展开触发器的悬停效果增强 */
+.expand-trigger {
+    position: relative;
+    overflow: hidden;
+}
+
+.expand-trigger::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.expand-trigger:hover::before {
+    left: 100%;
+}
+
+.expand-trigger:active {
+    transform: scale(0.98);
+}
+
+/* 书籍项的悬停效果增强 */
+.book-item-summary:hover,
+.book-item-expanded:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 展开内容的滚动条样式 */
+.expanded-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.expanded-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.expanded-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.expanded-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* 加载状态样式 */
+.purchase-content.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.purchase-content.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* 错误状态样式 */
+.purchase-content.error {
+    border-color: #ef4444;
+    background: #fef2f2;
+}
+
+.purchase-content.error .purchase-title {
+    color: #dc2626;
+}
+
+/* 成功状态样式 */
+.purchase-content.success {
+    border-color: #10b981;
+    background: #f0fdf4;
+}
+
+.purchase-content.success .purchase-title {
+    color: #059669;
+}
+
+/* 焦点状态样式 */
+.expand-trigger:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+    .purchase-content {
+        border-width: 2px;
+    }
+
+    .book-item-summary,
+    .book-item-expanded {
+        border-width: 2px;
+    }
+
+    .expand-trigger {
+        border: 2px solid #3b82f6;
+    }
+}
+
+/* 减少动画模式支持 */
+@media (prefers-reduced-motion: reduce) {
+
+    .expanded-content,
+    .book-item-summary,
+    .book-item-expanded,
+    .expand-trigger {
+        transition: none;
+    }
+
+    .expand-trigger::before {
+        display: none;
+    }
+}
+
+/* 书籍数
+量显示样式 */
+.book-quantity {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+    margin-top: 0.125rem;
+}
+
+/* 书籍信息缺失时的友好提示样式 */
+.book-author:contains("未知作者"),
+.book-category:contains("未分类") {
+    font-style: italic;
+    opacity: 0.7;
+}
+
+/* 书籍标题过长时的处理 */
+.book-title {
+    max-width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: help;
+}
+
+.book-title:hover {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: initial;
+    background: rgba(59, 130, 246, 0.1);
+    padding: 0.25rem;
+    border-radius: 4px;
+    position: relative;
+    z-index: 10;
+}
+
+/* 书籍信息的层次结构优化 */
+.book-main-info,
+.book-info-detail {
+    line-height: 1.4;
+}
+
+.book-main-info>span,
+.book-info-detail>span {
+    display: block;
+    margin-bottom: 0.125rem;
+}
+
+.book-main-info>span:last-child,
+.book-info-detail>span:last-child {
+    margin-bottom: 0;
+}
+
+/* 价格信息的对齐优化 */
+.book-price-info,
+.book-price-detail {
+    text-align: right;
+    justify-content: flex-end;
+}
+
+.book-price {
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.5px;
+}
+
+/* 空状态和错误状态的改进 */
+.no-books {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    color: #9ca3af;
+    font-style: italic;
+    background: #f9fafb;
+    border: 2px dashed #e5e7eb;
+    border-radius: 8px;
+    margin: 0.5rem 0;
+}
+
+.no-books::before {
+    content: '📚';
+    margin-right: 0.5rem;
+    font-size: 1.2rem;
+    opacity: 0.5;
+}
+
+/* 数据加载状态 */
+.book-item-loading {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* 书籍信息验证状态 */
+.book-item-summary.invalid,
+.book-item-expanded.invalid {
+    border-color: #fbbf24;
+    background: #fffbeb;
+}
+
+.book-item-summary.error,
+.book-item-expanded.error {
+    border-color: #ef4444;
+    background: #fef2f2;
+}
+
+.book-item-summary.success,
+.book-item-expanded.success {
+    border-color: #10b981;
+    background: #f0fdf4;
+}
+
+/* 工具提示样式 */
+.book-tooltip {
+    position: relative;
+}
+
+.book-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+}
+
+.book-tooltip:hover::after {
+    opacity: 1;
+}

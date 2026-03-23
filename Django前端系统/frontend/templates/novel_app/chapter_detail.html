@@ -1,0 +1,1012 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ book.title }} - 第{{ chapter.chapter_number }}章 - 小说阅读系统{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- 章节导航 -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm text-gray-500">
+            <li><a href="{% url 'index' %}" class="hover:text-blue-600">首页</a></li>
+            <li><i class="fas fa-chevron-right text-xs"></i></li>
+            <li><a href="{% url 'book_detail' book.book_id %}" class="hover:text-blue-600">{{ book.title }}</a></li>
+            <li><i class="fas fa-chevron-right text-xs"></i></li>
+            <li class="text-gray-900">第{{ chapter.chapter_number }}章</li>
+        </ol>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- 章节内容 -->
+        <div class="lg:col-span-3">
+            <div class="bg-white rounded-lg shadow-md">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <h1 class="text-2xl font-bold text-gray-900">{{ chapter.chapter_title }}</h1>
+                        <div class="flex space-x-2">
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">{{ chapter.word_count }}字</span>
+                            {% if is_free_chapter %}
+                            <span class="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">免费章节</span>
+                            {% elif is_vip_user %}
+                            <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">VIP免费</span>
+                            {% elif has_purchased %}
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">已购买</span>
+                            {% else %}
+                            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-full">需购买</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6">
+                    {% if can_read %}
+                        <!-- 章节内容 -->
+                        <div class="chapter-content prose max-w-none">
+                            {% if chapter_content %}
+                                <div class="text-gray-800 leading-relaxed whitespace-pre-wrap">{{ chapter_content|linebreaks }}</div>
+                            {% elif chapter.chapter_content %}
+                                <div class="text-gray-800 leading-relaxed whitespace-pre-wrap">{{ chapter.chapter_content|linebreaks }}</div>
+                            {% else %}
+                                <div class="text-center py-12">
+                                    <i class="fas fa-exclamation-triangle text-6xl text-yellow-400 mb-4"></i>
+                                    <h3 class="text-xl font-semibold text-gray-900 mb-2">章节内容暂未加载</h3>
+                                    <p class="text-gray-600 mb-4">此章节内容尚未爬取，请联系管理员爬取章节内容</p>
+                                    {% if request.session.username %}
+                                    <button onclick="crawlChapters([{{ chapter.chapter_number }}])" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                        <i class="fas fa-download mr-2"></i>立即爬取此章节
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if is_free_chapter and chapter.chapter_number == 2 and not next_chapter_purchased %}
+                        <!-- 免费章节结束提示 -->
+                        <div class="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6 mt-8">
+                            <div class="text-center">
+                                <i class="fas fa-gift text-4xl text-blue-600 mb-3"></i>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">免费章节已结束</h3>
+                                <p class="text-gray-600 mb-4">感谢您的阅读！继续阅读需要购买后续章节</p>
+                                <div class="flex justify-center space-x-4">
+                                    {% if request.session.username %}
+                                    <button onclick="showBulkPurchaseModal()" 
+                                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                        <i class="fas fa-shopping-cart mr-2"></i>购买后续章节
+                                    </button>
+                                    {% else %}
+                                    <a href="{% url 'login' %}" 
+                                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-block">
+                                        <i class="fas fa-sign-in-alt mr-2"></i>登录后购买
+                                    </a>
+                                    {% endif %}
+                                    <a href="{% url 'book_detail' book.book_id %}" 
+                                        class="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition-colors">
+                                        <i class="fas fa-book mr-2"></i>返回书籍详情
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <!-- 购买提示 -->
+                        <div class="text-center py-12">
+                            <i class="fas fa-lock text-6xl text-gray-400 mb-4"></i>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">此章节需要购买</h3>
+                            <p class="text-gray-600 mb-4">本书前2章免费阅读，第{{ chapter.chapter_number }}章需要购买整本书后才能阅读</p>
+                            <div style="background: #dbeafe; border: 1px solid #93c5fd; border-radius: 8px; padding: 16px; margin-bottom: 24px; display: inline-block; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                                <div style="display: flex; align-items: center; color: #1e40af; font-weight: 500;">
+                                    <i class="fas fa-info-circle" style="margin-right: 8px; color: #3b82f6;"></i>
+                                    <span style="font-size: 14px;">VIP用户可以免费查看所有内容，非VIP用户只能查看前2章免费章节。购买整本书后可以查看所有章节，永久有效，可随时阅读。</span>
+                                </div>
+                            </div>
+                            <div class="flex justify-center space-x-4">
+                                {% if request.session.username %}
+                                <a href="{% url 'book_detail' book.book_id %}" 
+                                    class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-block">
+                                    <i class="fas fa-shopping-cart mr-2"></i> 前往购买整本书
+                                </a>
+                                {% else %}
+                                <a href="{% url 'login' %}"
+                                    class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-block">
+                                    <i class="fas fa-sign-in-alt mr-2"></i> 登录后购买
+                                </a>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- 免费章节提示 -->
+                            <div class="mt-6 text-sm text-gray-500">
+                                <p>还没有阅读免费章节？</p>
+                                <div class="flex justify-center space-x-2 mt-2">
+                                    <a href="{% url 'chapter_detail' book.book_id 1 %}" 
+                                        class="text-blue-600 hover:text-blue-800 underline">第1章</a>
+                                    <span>|</span>
+                                    <a href="{% url 'chapter_detail' book.book_id 2 %}" 
+                                        class="text-blue-600 hover:text-blue-800 underline">第2章</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 章节导航 -->
+            <div class="bg-white rounded-lg shadow-md mt-4 p-4">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+                    {% if prev_chapter %}
+                    <a href="{% url 'chapter_detail' book.book_id prev_chapter.chapter_number %}" 
+                       style="background: #007bff; color: white; padding: 10px 16px; border-radius: 6px; text-decoration: none; display: inline-block; font-weight: 500;">
+                        ← 上一章 ({{ prev_chapter.chapter_number }})
+                    </a>
+                    {% else %}
+                    <span style="background: #6c757d; color: white; padding: 10px 16px; border-radius: 6px; display: inline-block; font-weight: 500;">
+                        ← 上一章 (无)
+                    </span>
+                    {% endif %}
+                    
+                    {% if next_chapter %}
+                    <a href="{% url 'chapter_detail' book.book_id next_chapter.chapter_number %}" 
+                       style="background: #007bff; color: white; padding: 10px 16px; border-radius: 6px; text-decoration: none; display: inline-block; font-weight: 500;">
+                        下一章 ({{ next_chapter.chapter_number }}) →
+                    </a>
+                    {% else %}
+                    <span style="background: #6c757d; color: white; padding: 10px 16px; border-radius: 6px; display: inline-block; font-weight: 500;">
+                        下一章 (无) →
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 侧边栏 -->
+        <div class="lg:col-span-1">
+        <!-- 书籍信息 -->
+        <div class="bg-white rounded-lg shadow-md mb-4">
+            <div class="p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-book mr-2"></i> 书籍信息
+                </h3>
+            </div>
+            <div class="p-4">
+                <h4 class="text-lg font-semibold text-gray-900 mb-2">{{ book.title }}</h4>
+                <p class="text-gray-600 text-sm mb-3">{{ book.author }}</p>
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">{{ book.category }}</span>
+                    <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">{{ book.status }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 阅读设置 -->
+        <div class="bg-white rounded-lg shadow-md mb-4">
+            <div class="p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-cog mr-2"></i> 阅读设置
+                </h3>
+            </div>
+            <div class="p-4">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">字体大小</label>
+                    <div class="flex space-x-1">
+                        <button type="button" id="font-small"
+                            class="flex-1 px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded hover:bg-gray-50"
+                            onclick="changeFontSize('small')">小</button>
+                        <button type="button" id="font-medium"
+                            class="flex-1 px-3 py-2 border border-blue-600 bg-blue-600 text-white text-sm rounded"
+                            onclick="changeFontSize('medium')">中</button>
+                        <button type="button" id="font-large"
+                            class="flex-1 px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded hover:bg-gray-50"
+                            onclick="changeFontSize('large')">大</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">背景色</label>
+                    <div class="flex space-x-1">
+                        <button type="button" id="bg-white"
+                            class="flex-1 px-3 py-2 border border-blue-600 bg-blue-600 text-white text-sm rounded"
+                            onclick="changeBackground('white')">白色</button>
+                        <button type="button" id="bg-sepia"
+                            class="flex-1 px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded hover:bg-gray-50"
+                            onclick="changeBackground('sepia')">护眼</button>
+                        <button type="button" id="bg-dark"
+                            class="flex-1 px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded hover:bg-gray-50"
+                            onclick="changeBackground('dark')">夜间</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 目录 -->
+        <div class="bg-white rounded-lg shadow-md">
+            <div class="p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-list mr-2"></i> 目录
+                </h3>
+            </div>
+            <div class="p-4">
+                <div class="space-y-2" id="chapterList">
+                    <!-- 章节列表将通过JavaScript动态加载 -->
+                    <div class="text-center py-4">
+                        <i class="fas fa-spinner fa-spin text-gray-400"></i>
+                        <p class="text-gray-500 text-sm mt-2">加载章节列表...</p>
+                    </div>
+                </div>
+                <div class="text-center mt-4">
+                    <a href="{% url 'book_detail' book.book_id %}"
+                       style="background: #28a745; color: white; padding: 10px 16px; border-radius: 6px; text-decoration: none; display: inline-block; font-weight: 500;">
+                        📚 查看完整目录
+                    </a>
+                    <br><br>
+                    <button onclick="loadChapterList()"
+                        style="background: #6c757d; color: white; padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 12px;">
+                        🔄 重新加载
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 单章购买确认模态框 -->
+<div id="purchaseModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">购买章节</h3>
+                <button onclick="hidePurchaseModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="text-center">
+                <i class="fas fa-shopping-cart text-4xl text-blue-600 mb-3"></i>
+                <h5 class="text-lg font-semibold mb-2">购买第{{ chapter.chapter_number }}章</h5>
+                <p class="text-gray-600 mb-4">{{ chapter.chapter_title }}</p>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <i class="fas fa-info-circle text-blue-600"></i>
+                    <span class="text-blue-800 ml-2">购买后即可永久阅读此章节</span>
+                </div>
+                <div class="text-lg font-semibold text-gray-900 mb-4">
+                    类型: {{ book.category }}
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button onclick="hidePurchaseModal()"
+                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                    取消
+                </button>
+                <button onclick="confirmPurchase()"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-credit-card mr-2"></i>确认购买
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 批量购买模态框 -->
+<div id="bulkPurchaseModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-10 mx-auto p-5 border w-[500px] shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">批量购买章节</h3>
+                <button onclick="hideBulkPurchaseModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="text-center mb-6">
+                <i class="fas fa-layer-group text-4xl text-green-600 mb-3"></i>
+                <h5 class="text-lg font-semibold mb-2">选择购买方案</h5>
+                <p class="text-gray-600">一次性购买多个章节，享受更优惠的价格</p>
+            </div>
+            
+            <div class="space-y-3 mb-6">
+                <!-- 购买选项 -->
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 cursor-pointer transition-colors" onclick="selectBulkOption('single', 1, 1.0, this)">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h6 class="font-semibold text-gray-900">购买一章</h6>
+                            <p class="text-sm text-gray-600">第{{ chapter.chapter_number|add:1 }}章</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-semibold text-green-600">¥1.00</div>
+                            <div class="text-xs text-blue-600 font-medium">单章购买</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 cursor-pointer transition-colors" onclick="selectBulkOption('next10', 10, 9.0, this)">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h6 class="font-semibold text-gray-900">接下来10章</h6>
+                            <p class="text-sm text-gray-600">第{{ chapter.chapter_number|add:1 }}章 - 第{{ chapter.chapter_number|add:10 }}章</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-semibold text-green-600">¥9.00</div>
+                            <div class="text-xs text-gray-500 line-through">原价 ¥10.00</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 cursor-pointer transition-colors" onclick="selectBulkOption('next20', 20, 16.0, this)">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h6 class="font-semibold text-gray-900">接下来20章</h6>
+                            <p class="text-sm text-gray-600">第{{ chapter.chapter_number|add:1 }}章 - 第{{ chapter.chapter_number|add:20 }}章</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-semibold text-green-600">¥16.00</div>
+                            <div class="text-xs text-gray-500 line-through">原价 ¥20.00</div>
+                            <div class="text-xs text-orange-600 font-medium">推荐</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 cursor-pointer transition-colors" onclick="selectBulkOption('all', 0, 0, this)">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h6 class="font-semibold text-gray-900">全本购买</h6>
+                            <p class="text-sm text-gray-600">购买整本书的所有章节</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-semibold text-green-600" id="fullBookPrice">计算中...</div>
+                            <div class="text-xs text-red-600 font-medium">最优惠</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 爬取内容选项 -->
+            <div class="mb-4">
+                <label class="flex items-center">
+                    <input type="checkbox" id="crawlContent" class="mr-2" checked>
+                    <span class="text-sm text-gray-700">同时爬取章节内容（推荐）</span>
+                </label>
+            </div>
+            
+            
+            <!-- 进度显示区域 -->
+            <div id="crawlProgressArea" class="hidden mb-4">
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">爬取进度</span>
+                        <span id="progressText" class="text-sm text-gray-600">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <div id="progressMessage" class="text-xs text-gray-600 mt-2">正在准备爬取...</div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button onclick="hideBulkPurchaseModal()"
+                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                    取消
+                </button>
+                <button id="confirmBulkPurchase" onclick="confirmBulkPurchase()" disabled
+                    class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    <i class="fas fa-credit-card mr-2"></i>确认购买
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chapter-content {
+        font-size: 16px;
+        line-height: 1.8;
+        text-indent: 2em;
+        padding: 20px 0;
+    }
+
+    .chapter-content.font-small {
+        font-size: 14px;
+    }
+
+    .chapter-content.font-large {
+        font-size: 18px;
+    }
+
+    .chapter-content.bg-sepia {
+        background-color: #f7f3e9;
+        color: #5c4b37;
+    }
+
+    .chapter-content.bg-dark {
+        background-color: #2c3e50;
+        color: #ecf0f1;
+    }
+
+    .chapter-list-sidebar {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .chapter-item-sidebar {
+        margin-bottom: 5px;
+    }
+
+    .chapter-link-sidebar {
+        display: block;
+        padding: 8px 12px;
+        text-decoration: none;
+        color: #333;
+        border-radius: 4px;
+        transition: all 0.3s;
+    }
+
+    .chapter-link-sidebar:hover {
+        background-color: #f8f9fa;
+        color: #007bff;
+    }
+
+    .chapter-link-sidebar.active {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .purchase-prompt {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 全局变量存储页面数据
+    const PAGE_DATA = {
+        bookId: parseInt('{{ book.book_id }}'),
+        currentChapter: parseInt('{{ chapter.chapter_number }}'),
+        bookTitle: '{{ book.title|escapejs }}'
+    };
+    
+    console.log('页面数据初始化:', PAGE_DATA);
+    
+    // 调试信息
+    console.log('can_read:', '{{ can_read }}');
+    console.log('is_free_chapter:', '{{ is_free_chapter }}');
+    console.log('has_purchased:', '{{ has_purchased }}');
+    console.log('next_chapter_purchased:', '{{ next_chapter_purchased }}');
+    
+    // 更新阅读时间（如果用户可以阅读）
+    function updateReadTime() {
+        const canRead = '{{ can_read }}' === 'True';
+        const hasPurchased = '{{ has_purchased }}' === 'True';
+        const isFreeChapter = '{{ is_free_chapter }}' === 'True';
+        
+        // 对于免费章节，跳过阅读记录更新，避免不必要的错误提示
+        if (isFreeChapter) {
+            console.log('免费章节，跳过阅读记录更新');
+            return;
+        }
+        
+        // 只有用户可以阅读且已购买时才更新阅读时间
+        if (canRead && hasPurchased) {
+            fetch('/api/update-read-time/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    book_title: PAGE_DATA.bookTitle,
+                    chapter_number: PAGE_DATA.currentChapter
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('阅读时间已更新');
+                    // 对于免费章节，不显示成功提示，避免打扰用户
+                    if (!isFreeChapter) {
+                        showMessage('阅读记录已更新', 'success');
+                    }
+                } else {
+                    console.log('更新阅读时间失败:', data.message);
+                    // 对于免费章节，如果是书架相关错误，不显示错误提示
+                    if (isFreeChapter && data.message.includes('书架')) {
+                        console.log('免费章节阅读记录更新失败，但不影响阅读体验');
+                    } else {
+                        showMessage('更新阅读记录失败: ' + data.message, 'error');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('更新阅读时间出错:', error);
+            });
+        }
+    }
+    
+    // 页面加载时更新阅读时间
+    document.addEventListener('DOMContentLoaded', function() {
+        updateReadTime();
+    });
+    
+    
+    // 单章购买模态框
+    function showPurchaseModal() {
+        document.getElementById('purchaseModal').classList.remove('hidden');
+    }
+
+    function hidePurchaseModal() {
+        document.getElementById('purchaseModal').classList.add('hidden');
+    }
+    
+    // 批量购买模态框
+    function showBulkPurchaseModal() {
+        document.getElementById('bulkPurchaseModal').classList.remove('hidden');
+        calculateFullBookPrice();
+    }
+
+    function hideBulkPurchaseModal() {
+        document.getElementById('bulkPurchaseModal').classList.add('hidden');
+        selectedBulkOption = null;
+        document.getElementById('confirmBulkPurchase').disabled = true;
+    }
+    
+    let selectedBulkOption = null;
+    
+    function selectBulkOption(type, count, price, element) {
+        // 移除之前的选中状态
+        document.querySelectorAll('#bulkPurchaseModal .border-blue-300').forEach(el => {
+            el.classList.remove('border-blue-300', 'bg-blue-50');
+            el.classList.add('border-gray-200');
+        });
+        
+        // 添加选中状态
+        if (element) {
+            element.classList.remove('border-gray-200');
+            element.classList.add('border-blue-300', 'bg-blue-50');
+        }
+        
+        selectedBulkOption = { type, count, price };
+        document.getElementById('confirmBulkPurchase').disabled = false;
+    }
+    
+    function calculateFullBookPrice() {
+        const bookId = PAGE_DATA.bookId;
+        fetch(`/api/book/${bookId}/chapters/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const totalChapters = data.chapters.length;
+                    const freeChapters = 2;
+                    const paidChapters = Math.max(0, totalChapters - freeChapters);
+                    const originalPrice = paidChapters * 1.0;
+                    const discountPrice = Math.floor(originalPrice * 0.6); // 6折优惠
+                    
+                    document.getElementById('fullBookPrice').innerHTML = `¥${discountPrice}.00 <div class="text-xs text-gray-500 line-through">原价 ¥${originalPrice}.00</div>`;
+                    
+                    // 更新全本购买选项的数据
+                    const fullBookOption = document.querySelector('[onclick*="all"]');
+                    if (fullBookOption) {
+                        fullBookOption.setAttribute('onclick', `selectBulkOption('all', ${paidChapters}, ${discountPrice}, this)`);
+                    }
+                } else {
+                    document.getElementById('fullBookPrice').textContent = '暂无数据';
+                }
+            })
+            .catch(error => {
+                console.error('计算全本价格失败:', error);
+                document.getElementById('fullBookPrice').textContent = '计算失败';
+            });
+    }
+
+    function confirmPurchase() {
+        var bookTitle = PAGE_DATA.bookTitle;
+        var chapterNumber = PAGE_DATA.currentChapter;
+        var chapterPrice = 1.0;
+
+        fetch('/api/purchase-chapter/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+                book_title: bookTitle,
+                chapter_number: chapterNumber,
+                chapter_price: chapterPrice
+            })
+        }).then(response => response.json()).then(data => {
+            if (data.success) {
+                showMessage(data.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showMessage('购买失败: ' + data.message, 'error');
+            }
+        }).catch(error => {
+            showMessage('购买失败: ' + error, 'error');
+        });
+
+        hidePurchaseModal();
+    }
+    
+    function confirmBulkPurchase() {
+        if (!selectedBulkOption) {
+            console.log('没有选择购买选项');
+            return;
+        }
+        
+        console.log('开始批量购买，选项:', selectedBulkOption);
+        
+        const bookTitle = PAGE_DATA.bookTitle;
+        const currentChapter = PAGE_DATA.currentChapter;
+        const crawlContent = document.getElementById('crawlContent').checked;
+        
+        console.log('购买参数:', { bookTitle, currentChapter, crawlContent });
+        
+        let purchaseData = {
+            book_title: bookTitle,
+            purchase_type: selectedBulkOption.type,
+            total_price: selectedBulkOption.price,
+            crawl_content: crawlContent
+        };
+        
+        if (selectedBulkOption.type === 'single') {
+            purchaseData.start_chapter = currentChapter + 1;
+            purchaseData.end_chapter = currentChapter + 1;
+        } else if (selectedBulkOption.type === 'next10') {
+            purchaseData.start_chapter = currentChapter + 1;
+            purchaseData.end_chapter = currentChapter + 10;
+        } else if (selectedBulkOption.type === 'next20') {
+            purchaseData.start_chapter = currentChapter + 1;
+            purchaseData.end_chapter = currentChapter + 20;
+        } else if (selectedBulkOption.type === 'all') {
+            purchaseData.start_chapter = 3; // 从第3章开始（前2章免费）
+            purchaseData.end_chapter = -1; // -1表示到最后一章
+        }
+        
+        // 显示进度区域
+        if (crawlContent) {
+            const progressArea = document.getElementById('crawlProgressArea');
+            if (progressArea) {
+                progressArea.classList.remove('hidden');
+                updateProgress(0, '正在处理购买请求...');
+            }
+        }
+        
+        fetch('/api/bulk-purchase-chapters/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify(purchaseData)
+        }).then(response => response.json()).then(data => {
+            if (data.success) {
+                showMessage(`成功购买 ${data.purchased_count} 个章节！`, 'success');
+                
+                // 如果启用了爬取内容，开始监控进度
+                if (crawlContent && data.crawl_result) {
+                    if (data.crawl_result.success) {
+                        updateProgress(100, '爬取完成！');
+                        setTimeout(() => {
+                            showMessage('章节内容爬取完成！', 'success');
+                            location.reload();
+                        }, 2000);
+                    } else {
+                        updateProgress(0, '爬取失败: ' + data.crawl_result.message);
+                        setTimeout(() => location.reload(), 3000);
+                    }
+                } else if (crawlContent) {
+                    // 开始轮询进度
+                    startProgressPolling(bookTitle);
+                } else {
+                    setTimeout(() => location.reload(), 1000);
+                }
+            } else {
+                showMessage('批量购买失败: ' + data.message, 'error');
+                if (crawlContent) {
+                    document.getElementById('crawlProgressArea').classList.add('hidden');
+                }
+            }
+        }).catch(error => {
+            showMessage('批量购买失败: ' + error, 'error');
+            if (crawlContent) {
+                document.getElementById('crawlProgressArea').classList.add('hidden');
+            }
+        });
+        
+        hideBulkPurchaseModal();
+    }
+    
+    // 更新进度显示
+    function updateProgress(percentage, message) {
+        console.log('更新进度:', percentage + '%', message);
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const progressMessage = document.getElementById('progressMessage');
+        
+        if (progressBar) progressBar.style.width = percentage + '%';
+        if (progressText) progressText.textContent = percentage + '%';
+        if (progressMessage) progressMessage.textContent = message;
+    }
+    
+    // 开始轮询进度
+    function startProgressPolling(bookTitle) {
+        let pollCount = 0;
+        const maxPolls = 60; // 最多轮询60次（5分钟）
+        
+        const pollInterval = setInterval(() => {
+            pollCount++;
+            
+            fetch(`/api/crawl-progress/?book_title=${encodeURIComponent(bookTitle)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.progress_info) {
+                        const progress = data.progress_info.crawl_progress || 0;
+                        const crawled = data.progress_info.crawled_chapters || 0;
+                        const total = data.progress_info.total_chapters || 0;
+                        
+                        updateProgress(progress, `已爬取 ${crawled}/${total} 章内容...`);
+                        
+                        // 如果进度达到100%或轮询次数达到上限，停止轮询
+                        if (progress >= 100 || pollCount >= maxPolls) {
+                            clearInterval(pollInterval);
+                            if (progress >= 100) {
+                                updateProgress(100, '爬取完成！');
+                                setTimeout(() => {
+                                    showMessage('章节内容爬取完成！', 'success');
+                                    location.reload();
+                                }, 2000);
+                            } else {
+                                updateProgress(progress, '爬取超时，请手动刷新页面');
+                                setTimeout(() => location.reload(), 5000);
+                            }
+                        }
+                    } else {
+                        updateProgress(0, '获取进度失败');
+                    }
+                })
+                .catch(error => {
+                    console.error('获取进度失败:', error);
+                    updateProgress(0, '获取进度失败');
+                });
+        }, 5000); // 每5秒轮询一次
+    }
+    
+    function getCsrfToken() {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'csrftoken') {
+                return value;
+            }
+        }
+        return '';
+    }
+    
+    function showMessage(message, type) {
+        const alertClass = type === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700';
+        const iconClass = type === 'success' ? 'fa-check-circle text-green-400' : 'fa-exclamation-circle text-red-400';
+        
+        const alertHtml = `
+            <div class="fixed top-4 right-4 z-50 max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden">
+                <div class="p-4">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <i class="fas ${iconClass}"></i>
+                        </div>
+                        <div class="ml-3 w-0 flex-1 pt-0.5">
+                            <p class="text-sm font-medium text-gray-900">${message}</p>
+                        </div>
+                        <div class="ml-4 flex-shrink-0 flex">
+                            <button class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', alertHtml);
+        
+        // 3秒后自动消失
+        setTimeout(() => {
+            const alert = document.querySelector('.fixed.top-4.right-4');
+            if (alert) {
+                alert.remove();
+            }
+        }, 3000);
+    }
+
+
+    function changeFontSize(size) {
+        const content = document.querySelector('.chapter-content');
+        
+        // 重置所有字体按钮样式
+        document.getElementById('font-small').className = 'flex-1 px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded hover:bg-gray-50';
+        document.getElementById('font-medium').className = 'flex-1 px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded hover:bg-gray-50';
+        document.getElementById('font-large').className = 'flex-1 px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded hover:bg-gray-50';
+        
+        // 设置当前选中按钮的样式
+        const activeButton = document.getElementById(`font-${size}`);
+        activeButton.className = 'flex-1 px-3 py-2 border border-blue-600 bg-blue-600 text-white text-sm rounded';
+        
+        // 设置字体大小
+        content.className = 'chapter-content';
+        if (size !== 'medium') {
+            content.classList.add(`font-${size}`);
+        }
+        
+        // 保存设置到本地存储
+        localStorage.setItem('fontSize', size);
+    }
+
+    function changeBackground(color) {
+        const content = document.querySelector('.chapter-content');
+        
+        // 重置所有背景按钮样式
+        document.getElementById('bg-white').className = 'flex-1 px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded hover:bg-gray-50';
+        document.getElementById('bg-sepia').className = 'flex-1 px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded hover:bg-gray-50';
+        document.getElementById('bg-dark').className = 'flex-1 px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded hover:bg-gray-50';
+        
+        // 设置当前选中按钮的样式
+        const activeButton = document.getElementById(`bg-${color}`);
+        activeButton.className = 'flex-1 px-3 py-2 border border-blue-600 bg-blue-600 text-white text-sm rounded';
+        
+        // 设置背景色
+        content.className = content.className.replace(/bg-\w+/g, '');
+        if (color !== 'white') {
+            content.classList.add(`bg-${color}`);
+        }
+        
+        // 保存设置到本地存储
+        localStorage.setItem('backgroundColor', color);
+    }
+
+    // 页面加载时恢复用户设置
+    function loadUserSettings() {
+        // 恢复字体大小设置
+        const savedFontSize = localStorage.getItem('fontSize') || 'medium';
+        changeFontSize(savedFontSize);
+        
+        // 恢复背景色设置
+        const savedBackgroundColor = localStorage.getItem('backgroundColor') || 'white';
+        changeBackground(savedBackgroundColor);
+    }
+
+    // 立即尝试加载章节列表（如果DOM已准备好）
+    function tryLoadChapterList() {
+        const chapterListContainer = document.getElementById('chapterList');
+        if (chapterListContainer) {
+            console.log('DOM已准备好，立即加载章节列表');
+            loadChapterList();
+            return true;
+        }
+        return false;
+    }
+    
+    // 页面加载完成后执行
+    document.addEventListener('DOMContentLoaded', function() {
+        loadUserSettings();
+        // 尝试立即加载，如果失败则延迟加载
+        if (!tryLoadChapterList()) {
+            setTimeout(loadChapterList, 500);
+        }
+        
+    });
+    
+    // 页面完全加载后再次尝试加载章节列表（备用方案）
+    window.addEventListener('load', function() {
+        // 如果章节列表还没有加载成功，再次尝试
+        const chapterListContainer = document.getElementById('chapterList');
+        if (chapterListContainer && chapterListContainer.innerHTML.includes('加载章节列表...')) {
+            console.log('页面完全加载后重新尝试加载章节列表');
+            setTimeout(loadChapterList, 200);
+        }
+    });
+    
+    // 如果脚本已经执行但DOM还没有准备好，等待一下再尝试
+    if (document.readyState === 'loading') {
+        // DOM还在加载中，等待DOMContentLoaded事件
+    } else if (document.readyState === 'interactive') {
+        // DOM已加载但资源还在加载中
+        setTimeout(tryLoadChapterList, 100);
+    } else {
+        // DOM和资源都已加载完成
+        setTimeout(tryLoadChapterList, 100);
+    }
+
+    // 加载章节列表
+    function loadChapterList() {
+        const bookId = PAGE_DATA.bookId;
+        const currentChapter = PAGE_DATA.currentChapter;
+        const chapterListContainer = document.getElementById('chapterList');
+        
+        console.log('开始加载章节列表，bookId:', bookId, 'currentChapter:', currentChapter);
+        
+        if (!bookId || isNaN(bookId)) {
+            console.error('bookId 无效:', bookId);
+            return;
+        }
+        
+        if (!chapterListContainer) {
+            console.error('找不到章节列表容器元素');
+            return;
+        }
+        
+        // 显示加载状态
+        chapterListContainer.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-spinner fa-spin text-gray-400"></i>
+                <p class="text-gray-500 text-sm mt-2">正在加载章节列表...</p>
+            </div>
+        `;
+        
+        fetch(`/api/book/${bookId}/chapters/`)
+            .then(response => {
+                console.log('API响应状态:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('API响应数据:', data);
+                if (data.success && data.chapters && data.chapters.length > 0) {
+                    let html = '';
+                    // 只显示前10章
+                    const chaptersToShow = data.chapters.slice(0, 10);
+                    
+                    chaptersToShow.forEach(chapter => {
+                        const isActive = chapter.number === currentChapter;
+                        html += `
+                            <div class="chapter-item-sidebar">
+                                <a href="/book/${bookId}/chapter/${chapter.number}/"
+                                    class="chapter-link-sidebar ${isActive ? 'active' : ''}">
+                                    ${chapter.title}
+                                    ${chapter.is_crawled ? '' : '<span class="text-xs text-gray-400 ml-1">(未爬取)</span>'}
+                                </a>
+                            </div>
+                        `;
+                    });
+                    
+                    chapterListContainer.innerHTML = html;
+                    console.log('章节列表加载成功，共', chaptersToShow.length, '章');
+                } else {
+                    console.log('没有章节数据或API返回失败');
+                    // 如果没有章节数据，显示提示信息
+                    chapterListContainer.innerHTML = `
+                        <div class="text-center py-4">
+                            <i class="fas fa-exclamation-triangle text-yellow-400 text-2xl mb-2"></i>
+                            <p class="text-gray-500 text-sm">暂无章节数据</p>
+                            <p class="text-gray-400 text-xs mt-1">请联系管理员爬取章节内容</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('加载章节列表失败:', error);
+                chapterListContainer.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-exclamation-circle text-red-400 text-2xl mb-2"></i>
+                        <p class="text-gray-500 text-sm">加载章节列表失败</p>
+                        <p class="text-gray-400 text-xs mt-1">错误: ${error.message}</p>
+                    </div>
+                `;
+            });
+    }
+
+    // 键盘快捷键
+    document.addEventListener('keydown', function (e) {
+        // 左右箭头键切换章节
+        if (e.key === 'ArrowLeft') {
+            const prevBtn = document.querySelector('a[href*="chapter"]');
+            if (prevBtn && prevBtn.textContent.includes('上一章')) {
+                prevBtn.click();
+            }
+        } else if (e.key === 'ArrowRight') {
+            const nextBtn = document.querySelector('a[href*="chapter"]');
+            if (nextBtn && nextBtn.textContent.includes('下一章')) {
+                nextBtn.click();
+            }
+        }
+    });
+</script>
+{% endblock %}

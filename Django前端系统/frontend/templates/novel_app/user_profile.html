@@ -1,0 +1,1588 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load book_tags %}
+
+{% block title %}个人中心 - 小说阅读系统{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- 页面标题 -->
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+            <i class="fas fa-user-circle text-blue-600 mr-3"></i> 个人中心
+        </h1>
+        <div class="text-sm text-gray-500">
+            欢迎回来，{{ user_profile.name|default:request.session.name }}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- 侧边栏 -->
+        <div class="lg:col-span-1 profile-sidebar">
+            <!-- 用户信息卡片 -->
+            <div class="card sticky top-8">
+                <div class="card-body text-center">
+                    <div class="user-avatar mb-4">
+                        {% if user_profile.avatar %}
+                        <img src="{{ user_profile.avatar.url }}" 
+                             alt="用户头像" 
+                             class="w-20 h-20 mx-auto rounded-full object-cover border-3 border-blue-500 shadow-lg">
+                        {% else %}
+                        <div class="w-20 h-20 mx-auto bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                            <i class="fas fa-user text-white text-2xl"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <h4 class="font-bold text-gray-900 mb-1">{{ user_profile.name|default:request.session.name }}</h4>
+                    <p class="text-gray-600 text-sm mb-4">{{ user_profile.username|default:request.session.username }}</p>
+                    
+                    <!-- 用户统计 -->
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div class="stat-item">
+                            <div class="stat-value text-lg font-bold text-blue-600">{{ total_orders_count|default:0 }}</div>
+                            <div class="stat-label text-xs text-gray-500">订单数</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value text-lg font-bold text-blue-600">{{ collected_count|default:0 }}</div>
+                            <div class="stat-label text-xs text-gray-500">收藏数</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 导航菜单 -->
+            <div class="card mt-4">
+                <div class="card-body p-0">
+                    <nav class="space-y-1">
+                        <a href="#profile" class="nav-item active" onclick="showSection('profile')">
+                            <i class="fas fa-user mr-3"></i> 个人信息
+                        </a>
+                        <a href="#orders" class="nav-item" onclick="showSection('orders')">
+                            <i class="fas fa-shopping-bag mr-3"></i> 我的订单
+                        </a>
+                        <a href="#purchases" class="nav-item" onclick="showSection('purchases')">
+                            <i class="fas fa-book mr-3"></i> 我的购买
+                        </a>
+                        <a href="#reviews" class="nav-item" onclick="showSection('reviews')">
+                            <i class="fas fa-star mr-3"></i> 我的评价
+                        </a>
+                        <a href="#collections" class="nav-item" onclick="showSection('collections')">
+                            <i class="fas fa-heart mr-3"></i> 我的收藏
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主内容区 -->
+        <div class="lg:col-span-3 space-y-6 main-content">
+            <!-- 个人信息 -->
+            <div id="profile-section" class="content-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="flex items-center">
+                            <i class="fas fa-user mr-2 text-blue-600"></i> 个人信息
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-4">
+                                <div class="info-item">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">头像</label>
+                                    <div class="flex items-center space-x-4">
+                                        {% if user_profile.avatar %}
+                                        <img src="{{ user_profile.avatar.url }}" 
+                                             alt="用户头像" 
+                                             class="w-12 h-12 rounded-full object-cover border border-gray-300">
+                                        {% else %}
+                                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-user text-white"></i>
+                                        </div>
+                                        {% endif %}
+                                        <span class="text-sm text-gray-500">点击"编辑信息"修改头像</span>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">真实姓名</label>
+                                    <p class="text-gray-900 font-medium">{{ user_profile.name|default:"未设置" }}</p>
+                                </div>
+                                <div class="info-item">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+                                    <p class="text-gray-900 font-medium">{{ user_profile.username|default:"未设置" }}</p>
+                                </div>
+                                <div class="info-item">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">最后登录</label>
+                                    <p class="text-gray-900">{{ user_profile.last_login_time|date:"Y-m-d H:i"|default:"首次登录" }}</p>
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="info-item">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">账户余额</label>
+                                    <p class="text-blue-600 font-bold flex items-center">
+                                        <i class="fas fa-wallet mr-2"></i> ¥{{ user_profile.balance|default:"0.00" }}
+                                    </p>
+                                </div>
+                                <div class="info-item">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">注册时间</label>
+                                    <p class="text-gray-900">{{ user_profile.register_time|date:"Y-m-d H:i" }}</p>
+                                </div>
+                                <div class="info-item">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">账户状态</label>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        {{ user_profile.status|default:"正常" }}
+                                    </span>
+                                </div>
+                                <div class="info-item">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">VIP状态</label>
+                                    <div class="flex items-center space-x-2 flex-wrap">
+                                        {% if user_profile.is_vip %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                            <i class="fas fa-crown mr-1"></i> VIP会员
+                                        </span>
+                                        <span class="text-sm text-gray-600">
+                                            到期时间：{{ user_profile.vip_expire_time|date:"Y-m-d H:i" }}
+                                        </span>
+                                        {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                            不是VIP
+                                        </span>
+                                        {% endif %}
+                                        <button onclick="showVipRechargeModal()" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-crown mr-1"></i> {% if user_profile.is_vip %}续费VIP{% else %}充值VIP{% endif %}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t border-gray-200 pt-6 mt-6">
+                            <div class="flex justify-end space-x-3">
+                                <button class="btn btn-primary" onclick="showEditModal()">
+                                    <i class="fas fa-edit mr-2"></i> 编辑信息
+                                </button>
+                                <button class="btn btn-success" onclick="showChangePasswordModal()">
+                                    <i class="fas fa-key mr-2"></i> 修改密码
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 我的订单 -->
+            <div id="orders-section" class="content-section hidden">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="flex items-center">
+                            <i class="fas fa-shopping-bag mr-2 text-blue-600"></i> 我的订单
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if orders %}
+                        <div class="space-y-4">
+                            {% for order in orders %}
+                            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div>
+                                        <h6 class="font-semibold text-gray-900">订单号: {{ order.order_number }}</h6>
+                                        <p class="text-sm text-gray-500">{{ order.create_time|date:"Y-m-d H:i" }}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-lg font-bold text-blue-600">¥{{ order.actual_amount|floatformat:2 }}</div>
+                                        {% if order.order_status == '待发货' %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                            {{ order.order_status }}
+                                        </span>
+                                        {% elif order.order_status == '已发货' %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            {{ order.order_status }}
+                                        </span>
+                                        {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            {{ order.order_status }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-gray-700">商品信息</span>
+                                        <span class="text-sm text-gray-500">共 {{ order.book_count }} 件</span>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        {% if order.book_titles %}
+                                            {% for book_title in order.book_titles %}
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                {{ book_title }}
+                                            </span>
+                                            {% endfor %}
+                                        {% else %}
+                                            <span class="text-gray-500 text-sm">无商品信息</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-end">
+                                    <button class="btn btn-outline-primary btn-sm" data-action="view-order" data-order-id="{{ order.order_id }}">
+                                        <i class="fas fa-eye mr-1"></i> 查看详情
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-12">
+                            <div class="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                <i class="fas fa-shopping-bag text-2xl text-gray-400"></i>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">暂无订单</h3>
+                            <p class="text-gray-500 mb-6">您还没有任何订单记录</p>
+                            <a href="{% url 'book_list' %}" class="btn btn-primary">
+                                <i class="fas fa-shopping-cart mr-2"></i> 去购物
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 订单详情模态框 -->
+            <div id="orderDetailModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+                <div class="relative top-10 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
+                    <div class="mt-3">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">订单详情</h3>
+                            <button onclick="hideOrderDetailModal()" class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div id="orderDetailContent" class="order-detail-content">
+                            <!-- 订单详情内容将在这里动态加载 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 我的购买 -->
+            <div id="purchases-section" class="content-section hidden">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="flex items-center">
+                            <i class="fas fa-book mr-2 text-blue-600"></i> 我的购买
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if purchased_books %}
+                        <div class="space-y-4">
+                            {% for purchase in purchased_books %}
+                            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div class="flex-1">
+                                        <h6 class="font-semibold text-gray-900">{{ purchase.book_title }}</h6>
+                                        <p class="text-sm text-gray-500">整本购买 - 共 {{ purchase.chapter_count }} 章</p>
+                                        <p class="text-sm text-gray-500">购买时间: {{ purchase.purchase_time|date:"Y-m-d H:i" }}</p>
+                                        {% if purchase.last_purchase_time and purchase.last_purchase_time != purchase.purchase_time %}
+                                        <p class="text-sm text-gray-500">最后更新: {{ purchase.last_purchase_time|date:"Y-m-d H:i" }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-lg font-bold text-green-600">¥{{ purchase.total_price|floatformat:2 }}</div>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <i class="fas fa-check-circle mr-1"></i> 已购买
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-between items-center">
+                                    <div class="text-sm text-gray-600">
+                                        <span class="font-medium">购买类型:</span> 整本购买
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        {% if purchase.book_id %}
+                                        <a href="{% url 'book_detail' purchase.book_id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye mr-1"></i> 查看书籍
+                                        </a>
+                                        <a href="{% url 'book_detail' purchase.book_id %}#tab-chapters" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-book-open mr-1"></i> 开始阅读
+                                        </a>
+                                        {% else %}
+                                        <span class="text-sm text-gray-500">书籍信息不可用</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- 分页 -->
+                        {% if purchased_books.has_other_pages %}
+                        <div class="mt-6 flex justify-center">
+                            <nav class="flex space-x-2">
+                                {% if purchased_books.has_previous %}
+                                    <a href="?purchases_page={{ purchased_books.previous_page_number }}" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                                        上一页
+                                    </a>
+                                {% endif %}
+                                
+                                {% for num in purchased_books.paginator.page_range %}
+                                    {% if purchased_books.number == num %}
+                                        <span class="px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md">
+                                            {{ num }}
+                                        </span>
+                                    {% else %}
+                                        <a href="?purchases_page={{ num }}" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                                            {{ num }}
+                                        </a>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if purchased_books.has_next %}
+                                    <a href="?purchases_page={{ purchased_books.next_page_number }}" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                                        下一页
+                                    </a>
+                                {% endif %}
+                            </nav>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div class="text-center py-8">
+                            <div class="text-gray-400 mb-4">
+                                <i class="fas fa-book text-6xl"></i>
+                            </div>
+                            <h6 class="text-lg font-medium text-gray-900 mb-2">暂无购买记录</h6>
+                            <p class="text-gray-500 mb-4">您还没有购买任何书籍章节</p>
+                            <a href="{% url 'book_list' %}" class="btn btn-primary">
+                                <i class="fas fa-shopping-cart mr-2"></i> 去购买
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 我的评价 -->
+            <div id="reviews-section" class="content-section hidden">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="flex items-center">
+                            <i class="fas fa-star mr-2 text-blue-600"></i> 我的评价
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if reviews %}
+                        <div class="space-y-4">
+                            {% for review in reviews %}
+                            <div class="border border-gray-200 rounded-lg p-4" data-review-id="{{ review.evaluate_id }}">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div>
+                                        <h6 class="font-semibold text-gray-900 mb-1">{{ review.book_title }}</h6>
+                                        <div class="flex items-center">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= review.rating %}
+                                                <i class="fas fa-star text-yellow-400"></i>
+                                                {% else %}
+                                                <i class="far fa-star text-gray-300"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                            <span class="ml-2 text-sm text-gray-500">{{ review.rating }}分</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-sm text-gray-500">{{ review.create_time|date:"Y-m-d H:i" }}</span>
+                                        <div class="flex space-x-1">
+                                            <button onclick="editUserReview('{{ review.evaluate_id }}')" class="text-blue-600 hover:text-blue-800 p-1" title="编辑评价">
+                                                <i class="fas fa-edit text-sm"></i>
+                                            </button>
+                                            <button onclick="deleteUserReview('{{ review.evaluate_id }}')" class="text-red-600 hover:text-red-800 p-1" title="删除评价">
+                                                <i class="fas fa-trash text-sm"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% if review.review_content %}
+                                <p class="text-gray-700">{{ review.review_content }}</p>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-12">
+                            <div class="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                <i class="fas fa-star text-2xl text-gray-400"></i>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">暂无评价</h3>
+                            <p class="text-gray-500 mb-6">您还没有发表任何评价</p>
+                            <a href="{% url 'book_list' %}" class="btn btn-primary">
+                                <i class="fas fa-star mr-2"></i> 去评价
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 我的收藏 -->
+            <div id="collections-section" class="content-section hidden collections-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="flex items-center">
+                            <i class="fas fa-heart mr-2 text-blue-600"></i> 我的收藏
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if collected_books %}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {% for book in collected_books %}
+                            <div class="card book-card group">
+                                <div class="book-cover">
+                                    {% book_cover_image book %}
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="font-semibold text-gray-900 mb-2 line-clamp-2">{{ book.title }}</h6>
+                                    <p class="text-gray-600 text-sm mb-2">{{ book.author }}</p>
+                                    
+                                    <div class="book-meta mb-3">
+                                        <span class="badge bg-secondary">{{ book.category }}</span>
+                                        <span class="badge bg-info">{{ book.status }}</span>
+                                    </div>
+                                    
+                                    <div class="book-stats grid grid-cols-2 gap-2 text-center mb-3">
+                                        <div class="text-xs text-gray-500">
+                                            <i class="fas fa-star text-yellow-400 block mb-1"></i>
+                                            {{ book.rating|floatformat:1 }}
+                                        </div>
+                                        <div class="text-xs text-gray-500">
+                                            <i class="fas fa-heart text-red-400 block mb-1"></i>
+                                            {{ book.collection_count }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <a href="{% url 'book_detail' book.book_id %}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-eye mr-1"></i> 查看
+                                        </a>
+                                        <button class="btn btn-outline-danger btn-sm" onclick="removeFromCollection('{{ book.title }}')">
+                                            <i class="fas fa-heart-broken"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-12">
+                            <div class="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                <i class="fas fa-heart text-2xl text-gray-400"></i>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">暂无收藏</h3>
+                            <p class="text-gray-500 mb-6">您还没有收藏任何书籍</p>
+                            <a href="{% url 'book_list' %}" class="btn btn-primary">
+                                <i class="fas fa-heart mr-2"></i> 去收藏
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑个人信息模态框 -->
+<div id="editProfileModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-10 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-medium text-gray-900">编辑个人信息</h3>
+                <button onclick="hideEditModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="editProfileForm" method="post" action="{% url 'update_profile' %}" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- 头像上传区域 - 简化版本 -->
+                <div class="bg-gray-50 p-6 rounded-lg border border-gray-300">
+                    <label class="block text-sm font-medium text-gray-700 mb-4">头像设置</label>
+                    
+                    <!-- 当前头像显示 -->
+                    <div class="text-center mb-4">
+                        {% if user_profile.avatar %}
+                        <img src="{{ user_profile.avatar.url }}" 
+                             alt="当前头像" 
+                             class="w-20 h-20 rounded-full object-cover border-2 border-blue-500 shadow-lg mx-auto">
+                        {% else %}
+                        <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg mx-auto">
+                            <i class="fas fa-user text-white text-2xl"></i>
+                        </div>
+                        {% endif %}
+                        <p class="text-xs text-gray-500 mt-2">当前头像</p>
+                    </div>
+                    
+                    <!-- 传统文件上传方式 -->
+                    <div class="text-center">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">选择新头像</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                            <input type="file" id="avatar" name="avatar" accept="image/*" 
+                                   class="block w-full text-sm text-gray-500 text-center">
+                            <p class="text-xs text-gray-500 mt-2">支持 JPG、PNG、GIF 格式</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 基本信息 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="editName" class="block text-sm font-medium text-gray-700 mb-1">真实姓名</label>
+                        <input type="text" id="editName" name="name" value="{{ user_profile.name|default:'' }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label for="editUsername" class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+                        <input type="text" id="editUsername" name="username" value="{{ user_profile.username|default:'' }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" readonly>
+                        <p class="text-xs text-gray-500 mt-1">用户名不可修改</p>
+                    </div>
+                </div>
+                
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="hideEditModal()" class="px-6 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                        取消
+                    </button>
+                    <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i> 保存修改
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑评价模态框 -->
+<div id="editUserReviewModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-[500px] shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">编辑评价</h3>
+                <button onclick="hideEditUserReviewModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="editUserReviewForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">评分</label>
+                    <div class="rating-input">
+                        <input type="radio" name="edit_user_rating" value="1" id="edit_user_star1">
+                        <label for="edit_user_star1"><i class="fas fa-star"></i></label>
+                        <input type="radio" name="edit_user_rating" value="2" id="edit_user_star2">
+                        <label for="edit_user_star2"><i class="fas fa-star"></i></label>
+                        <input type="radio" name="edit_user_rating" value="3" id="edit_user_star3">
+                        <label for="edit_user_star3"><i class="fas fa-star"></i></label>
+                        <input type="radio" name="edit_user_rating" value="4" id="edit_user_star4">
+                        <label for="edit_user_star4"><i class="fas fa-star"></i></label>
+                        <input type="radio" name="edit_user_rating" value="5" id="edit_user_star5">
+                        <label for="edit_user_star5"><i class="fas fa-star"></i></label>
+                    </div>
+                </div>
+                <div>
+                    <label for="editUserReviewContent" class="block text-sm font-medium text-gray-700 mb-2">评价内容</label>
+                    <textarea id="editUserReviewContent" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 auto-resize" placeholder="分享您的阅读感受..." data-min-rows="4" data-max-rows="10"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="hideEditUserReviewModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                        取消
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                        更新评价
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 修改密码模态框 -->
+<div id="changePasswordModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-10 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-medium text-gray-900">修改密码</h3>
+                <button onclick="hideChangePasswordModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="changePasswordForm" method="post" action="{% url 'change_password' %}" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- 当前密码 -->
+                <div>
+                    <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-1">当前密码</label>
+                    <input type="password" id="currentPassword" name="current_password" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="请输入当前密码">
+                </div>
+                
+                <!-- 新密码 -->
+                <div>
+                    <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">新密码</label>
+                    <input type="password" id="newPassword" name="new_password" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="请输入新密码（至少6位）">
+                </div>
+                
+                <!-- 确认新密码 -->
+                <div>
+                    <label for="confirmNewPassword" class="block text-sm font-medium text-gray-700 mb-1">确认新密码</label>
+                    <input type="password" id="confirmNewPassword" name="confirm_new_password" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="请再次输入新密码">
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="hideChangePasswordModal()" class="px-6 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                        取消
+                    </button>
+                    <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i> 保存密码
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- VIP充值模态框 -->
+<div id="vipRechargeModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-10 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-medium text-gray-900 flex items-center">
+                    <i class="fas fa-crown text-yellow-500 mr-2"></i> VIP充值
+                </h3>
+                <button onclick="hideVipRechargeModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-6">
+                <!-- 当前余额显示 -->
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-gray-700">当前余额：</span>
+                        <span class="text-lg font-bold text-blue-600">¥{{ user_profile.balance|default:"0.00" }}</span>
+                    </div>
+                </div>
+                
+                <!-- VIP套餐选择 -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">选择充值时长</label>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- 1个月套餐 -->
+                        <div class="vip-package" data-duration="1" data-price="20.00" onclick="selectVipPackage(this)">
+                            <div class="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-500 transition-colors">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-gray-900 mb-1">1个月</div>
+                                    <div class="text-xl font-bold text-blue-600 mb-2">¥20.00</div>
+                                    <div class="text-xs text-gray-500">原价</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 3个月套餐 -->
+                        <div class="vip-package" data-duration="3" data-price="54.00" onclick="selectVipPackage(this)">
+                            <div class="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-500 transition-colors">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-gray-900 mb-1">3个月</div>
+                                    <div class="text-xl font-bold text-blue-600 mb-1">¥54.00</div>
+                                    <div class="text-xs text-gray-500 line-through mb-1">¥60.00</div>
+                                    <div class="text-xs text-green-600 font-medium">9折优惠</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 1年套餐 -->
+                        <div class="vip-package" data-duration="12" data-price="192.00" onclick="selectVipPackage(this)">
+                            <div class="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-500 transition-colors">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-gray-900 mb-1">1年</div>
+                                    <div class="text-xl font-bold text-blue-600 mb-1">¥192.00</div>
+                                    <div class="text-xs text-gray-500 line-through mb-1">¥240.00</div>
+                                    <div class="text-xs text-green-600 font-medium">8折优惠</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 选中的套餐信息 -->
+                <div id="selectedPackageInfo" class="hidden bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="text-sm font-medium text-gray-700">已选择：</span>
+                            <span id="selectedPackageText" class="text-sm font-bold text-gray-900"></span>
+                        </div>
+                        <div>
+                            <span class="text-sm font-medium text-gray-700">需支付：</span>
+                            <span id="selectedPackagePrice" class="text-lg font-bold text-yellow-600"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 操作按钮 -->
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="hideVipRechargeModal()" class="px-6 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                        取消
+                    </button>
+                    <button type="button" id="confirmRechargeBtn" onclick="confirmVipRecharge()" class="px-6 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors" disabled>
+                        <i class="fas fa-crown mr-2"></i> 确认充值
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/user-profile.css' %}" rel="stylesheet">
+<style>
+/* 固定个人信息部分 */
+.profile-sidebar {
+    position: sticky !important;
+    top: 2rem !important;
+    height: fit-content !important;
+    z-index: 10 !important;
+    max-height: calc(100vh - 4rem) !important;
+    overflow-y: auto !important;
+}
+
+/* 适当压缩个人信息部分的间隔 */
+.profile-sidebar .card-body {
+    padding: 1.5rem 1.25rem !important;
+}
+
+.profile-sidebar .user-avatar {
+    margin-bottom: 1.25rem !important;
+}
+
+.profile-sidebar h4 {
+    margin-bottom: 0.5rem !important;
+}
+
+.profile-sidebar p {
+    margin-bottom: 1.5rem !important;
+}
+
+.profile-sidebar .grid {
+    margin-bottom: 0 !important;
+}
+
+/* 适当压缩导航菜单与统计卡片之间的间隔 */
+.profile-sidebar .card.mt-4 {
+    margin-top: 1.5rem !important;
+}
+
+/* 适当压缩统计卡片的间隔 */
+.profile-sidebar .grid {
+    gap: 1rem !important;
+    margin-bottom: 0 !important;
+}
+
+.profile-sidebar .stat-item {
+    padding: 1.25rem 0.75rem !important;
+    background: #f8fafc !important;
+    border-radius: 10px !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.profile-sidebar .stat-value {
+    font-size: 1.25rem !important;
+    margin-bottom: 0.25rem !important;
+}
+
+.profile-sidebar .stat-label {
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+}
+
+/* 适当压缩导航菜单项之间的间隔 */
+.profile-sidebar .space-y-1 > * + * {
+    margin-top: 0.5rem !important;
+}
+
+.profile-sidebar .nav-item {
+    padding: 0.875rem 1.25rem !important;
+    margin-bottom: 0.25rem !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+}
+
+.profile-sidebar .nav-item:hover {
+    background-color: #f1f5f9 !important;
+    transform: translateX(4px) !important;
+}
+
+.profile-sidebar .card {
+    position: sticky !important;
+    top: 2rem !important;
+    z-index: 10 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* 确保主内容区域有足够的左边距 */
+.main-content {
+    position: relative;
+    z-index: 1;
+}
+
+/* 响应式调整 */
+@media (max-width: 1024px) {
+    .profile-sidebar {
+        position: relative !important;
+        top: auto !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+    }
+    
+    .profile-sidebar .card {
+        position: relative !important;
+        top: auto !important;
+    }
+}
+
+/* 统一收藏页面书籍封面高度 */
+.collections-section .book-cover {
+    height: 200px !important;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.collections-section .book-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    background: #ffffff;
+    display: block;
+}
+
+.collections-section .no-cover {
+    height: 200px !important;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0ea5e9;
+    font-size: 2rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+/* 确保书籍卡片高度一致 */
+.collections-section .book-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.collections-section .book-card .card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.collections-section .book-card .card-footer {
+    margin-top: auto;
+}
+
+/* 订单详情模态框样式 */
+.order-detail-content {
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.order-detail-content .space-y-4 > div {
+    margin-bottom: 1rem;
+}
+
+.order-detail-content .space-y-2 > div {
+    margin-bottom: 0.5rem;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .collections-section .book-cover {
+        height: 160px !important;
+    }
+    
+    .collections-section .no-cover {
+        height: 160px !important;
+        font-size: 1.5rem;
+    }
+    
+    #orderDetailModal .relative {
+        width: 95% !important;
+        max-width: 95% !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .collections-section .book-cover {
+        height: 140px !important;
+    }
+    
+    .collections-section .no-cover {
+        height: 140px !important;
+        font-size: 1.25rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 最简化的页面功能
+document.addEventListener('DOMContentLoaded', function() {
+    // 默认显示个人信息区域
+    showSection('profile');
+    
+    // 编辑评价表单提交处理
+    const editUserReviewForm = document.getElementById('editUserReviewForm');
+    if (editUserReviewForm) {
+        editUserReviewForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitEditUserReview();
+        });
+    }
+    
+    // 编辑评价评分星星点击事件
+    const editUserRatingInputs = document.querySelectorAll('#editUserReviewModal input[name="edit_user_rating"]');
+    editUserRatingInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            updateUserReviewStars(parseInt(this.value));
+        });
+    });
+    
+    // 编辑评价评分星星标签点击事件
+    const editUserRatingLabels = document.querySelectorAll('#editUserReviewModal .rating-input label');
+    editUserRatingLabels.forEach((label, index) => {
+        label.addEventListener('click', function() {
+            const rating = index + 1;
+            updateUserReviewStars(rating);
+        });
+    });
+    
+    // 使用事件委托处理按钮点击事件
+    document.addEventListener('click', function(e) {
+        const button = e.target.closest('[data-action]');
+        if (!button) return;
+        
+        const action = button.getAttribute('data-action');
+        const orderId = button.getAttribute('data-order-id');
+        
+        if (action === 'view-order' && orderId) {
+            e.preventDefault();
+            viewOrderDetail(parseInt(orderId));
+        }
+    });
+});
+
+// 显示指定内容区域
+function showSection(sectionName) {
+    // 隐藏所有内容区域
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.add('hidden');
+    });
+    
+    // 显示选中的内容区域
+    const targetSection = document.getElementById(sectionName + '-section');
+    if (targetSection) {
+        targetSection.classList.remove('hidden');
+    }
+    
+    // 更新导航菜单状态
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // 找到对应的导航项并激活
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        if (item.getAttribute('onclick') && item.getAttribute('onclick').includes(sectionName)) {
+            item.classList.add('active');
+        }
+    });
+}
+
+// 显示编辑模态框
+function showEditModal() {
+    document.getElementById('editProfileModal').classList.remove('hidden');
+}
+
+// 隐藏编辑模态框
+function hideEditModal() {
+    document.getElementById('editProfileModal').classList.add('hidden');
+}
+
+// 查看订单详情
+function viewOrderDetail(orderId) {
+    fetch(`/api/user/get-order-detail/${orderId}/`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 将books数据附加到order对象上
+            const order = data.order;
+            order.books = data.books || [];
+            displayOrderDetail(order, data.books || []);
+            document.getElementById('orderDetailModal').classList.remove('hidden');
+        } else {
+            alert('获取订单详情失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('获取订单详情失败');
+    });
+}
+
+// 显示订单详情
+function displayOrderDetail(order, books) {
+    const content = document.getElementById('orderDetailContent');
+    
+    // 如果books未传入，尝试从order对象获取
+    books = books || order.books || [];
+    
+    let booksHtml = '';
+    if (books.length > 0) {
+        booksHtml = books.map(book => `
+            <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                <div>
+                    <span class="font-medium">${book.book_title || '未知书名'}</span>
+                    ${book.author ? `<p class="text-sm text-gray-600">作者：${book.author}</p>` : ''}
+                    ${book.category ? `<p class="text-sm text-gray-500">分类：${book.category}</p>` : ''}
+                </div>
+                <div class="text-right">
+                    <span class="font-semibold text-green-600">¥${parseFloat(book.price || 0).toFixed(2)}</span>
+                    ${(book.quantity || 1) > 1 ? `<p class="text-sm text-gray-500">x${book.quantity}</p>` : ''}
+                </div>
+            </div>
+        `).join('');
+    } else {
+        booksHtml = '<div class="text-gray-500 text-sm py-4 text-center">暂无书籍信息</div>';
+    }
+    
+    // 计算书籍数量
+    let bookCount = order.book_count || (books.length > 0 ? books.reduce((sum, book) => sum + (book.quantity || 1), 0) : 0);
+    
+    const statusClass = {
+        '待支付': 'bg-yellow-100 text-yellow-800',
+        '已支付': 'bg-blue-100 text-blue-800',
+        '已取消': 'bg-red-100 text-red-800'
+    }[order.order_status] || 'bg-gray-100 text-gray-800';
+    
+    content.innerHTML = `
+        <div class="space-y-4">
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="font-semibold mb-2">订单信息</h4>
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div><span class="text-gray-600">订单号：</span><span class="font-medium">${order.order_number}</span></div>
+                    <div><span class="text-gray-600">订单状态：</span><span class="font-medium inline-flex items-center px-2.5 py-0.5 rounded-full text-xs ${statusClass}">${order.order_status}</span></div>
+                    <div><span class="text-gray-600">创建时间：</span><span class="font-medium">${new Date(order.create_time).toLocaleString('zh-CN')}</span></div>
+                    <div><span class="text-gray-600">支付时间：</span><span class="font-medium">${order.payment_time ? new Date(order.payment_time).toLocaleString('zh-CN') : '未支付'}</span></div>
+                    <div><span class="text-gray-600">支付方式：</span><span class="font-medium">${order.payment_method || '余额支付'}</span></div>
+                    <div><span class="text-gray-600">订单金额：</span><span class="font-medium text-green-600">¥${parseFloat(order.actual_amount || order.order_amount || 0).toFixed(2)}</span></div>
+                    <div><span class="text-gray-600">书籍数量：</span><span class="font-medium">${bookCount} 本</span></div>
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="font-semibold mb-2">购买书籍</h4>
+                <div class="space-y-2 max-h-64 overflow-y-auto">
+                    ${booksHtml}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// 隐藏订单详情模态框
+function hideOrderDetailModal() {
+    document.getElementById('orderDetailModal').classList.add('hidden');
+}
+
+// 编辑评价（个人中心）
+function editUserReview(reviewId) {
+    // 找到对应的评价项
+    const reviewItem = document.querySelector(`[data-review-id="${reviewId}"]`);
+    if (!reviewItem) {
+        showMessage('找不到评价信息，请刷新页面后重试', 'error');
+        return;
+    }
+    
+    // 从DOM中获取评价数据
+    const bookTitle = reviewItem.querySelector('h6')?.textContent.trim() || '';
+    const ratingStars = reviewItem.querySelectorAll('.fa-star.fas');
+    const rating = ratingStars.length;
+    const reviewContent = reviewItem.querySelector('p.text-gray-700')?.textContent.trim() || '';
+    
+    // 显示编辑模态框
+    showEditUserReviewModal({
+        evaluate_id: reviewId,
+        book_title: bookTitle,
+        rating: rating,
+        review_content: reviewContent
+    });
+}
+
+// 显示编辑评价模态框
+function showEditUserReviewModal(review) {
+    // 填充表单数据
+    document.getElementById('editUserReviewContent').value = review.review_content || '';
+    
+    // 设置评分
+    if (review.rating) {
+        const ratingInput = document.querySelector(`input[name="edit_user_rating"][value="${review.rating}"]`);
+        if (ratingInput) {
+            ratingInput.checked = true;
+        }
+        // 更新星星显示
+        updateUserReviewStars(review.rating);
+    }
+    
+    // 存储评价ID
+    document.getElementById('editUserReviewForm').dataset.reviewId = review.evaluate_id;
+    
+    // 显示模态框
+    document.getElementById('editUserReviewModal').classList.remove('hidden');
+}
+
+// 隐藏编辑评价模态框
+function hideEditUserReviewModal() {
+    document.getElementById('editUserReviewModal').classList.add('hidden');
+    document.getElementById('editUserReviewForm').reset();
+    delete document.getElementById('editUserReviewForm').dataset.reviewId;
+}
+
+// 更新星星显示（个人中心）
+function updateUserReviewStars(rating) {
+    const stars = document.querySelectorAll('#editUserReviewModal .rating-input label');
+    stars.forEach((star, index) => {
+        if (index < rating) {
+            star.style.color = '#fbbf24'; // 金色
+            star.classList.add('active');
+        } else {
+            star.style.color = '#d1d5db'; // 灰色
+            star.classList.remove('active');
+        }
+    });
+}
+
+// 删除评价
+function deleteUserReview(reviewId) {
+    if (!confirm('确定要删除这条评价吗？删除后无法恢复。')) {
+        return;
+    }
+    
+    // 发送删除请求
+    fetch('/api/delete-review/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            review_id: reviewId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('评价删除成功', 'success');
+            // 移除评价项
+            const reviewItem = document.querySelector(`[data-review-id="${reviewId}"]`);
+            if (reviewItem) {
+                reviewItem.style.transition = 'opacity 0.3s';
+                reviewItem.style.opacity = '0';
+                setTimeout(() => {
+                    reviewItem.remove();
+                    // 检查是否还有评价，如果没有则显示空状态
+                    const reviewsSection = document.querySelector('#reviews-section .space-y-4');
+                    if (reviewsSection && reviewsSection.children.length === 0) {
+                        location.reload(); // 重新加载页面以显示空状态
+                    }
+                }, 300);
+            } else {
+                // 如果找不到元素，刷新页面
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            }
+        } else {
+            showMessage(data.message || '删除失败', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('网络错误，请重试', 'error');
+    });
+}
+
+// 提交编辑评价表单
+function submitEditUserReview() {
+    const reviewId = document.getElementById('editUserReviewForm').dataset.reviewId;
+    const rating = document.querySelector('input[name="edit_user_rating"]:checked');
+    const content = document.getElementById('editUserReviewContent').value.trim();
+    
+    // 验证输入
+    if (!rating) {
+        showMessage('请选择评分', 'error');
+        return;
+    }
+    
+    if (!content) {
+        showMessage('请输入评价内容', 'error');
+        return;
+    }
+    
+    if (content.length < 10) {
+        showMessage('评价内容至少需要10个字符', 'error');
+        return;
+    }
+    
+    // 准备提交数据
+    const formData = {
+        review_id: parseInt(reviewId),
+        rating: parseInt(rating.value),
+        review_content: content
+    };
+    
+    // 显示加载状态
+    const submitBtn = document.querySelector('#editUserReviewForm button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = '更新中...';
+    submitBtn.disabled = true;
+    
+    // 发送更新请求
+    fetch('/api/edit-review/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('评价更新成功！', 'success');
+            hideEditUserReviewModal();
+            // 刷新页面以显示更新后的评价
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            showMessage(data.message || '评价更新失败', 'error');
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('网络错误，请重试', 'error');
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// 显示修改密码模态框
+function showChangePasswordModal() {
+    console.log('showChangePasswordModal called'); // 调试信息
+    const modal = document.getElementById('changePasswordModal');
+    console.log('Modal element:', modal); // 调试信息
+    if (modal) {
+        modal.classList.remove('hidden');
+        // 清空表单
+        document.getElementById('changePasswordForm').reset();
+        console.log('Modal shown successfully'); // 调试信息
+    } else {
+        console.error('Modal element not found'); // 调试信息
+    }
+}
+
+// 隐藏修改密码模态框
+function hideChangePasswordModal() {
+    const modal = document.getElementById('changePasswordModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+
+// 从收藏中移除书籍
+function removeFromCollection(bookTitle) {
+    if (confirm(`确定要从收藏中移除《${bookTitle}》吗？`)) {
+        fetch('/api/remove-from-collection/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                book_title: bookTitle
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage(data.message, 'success');
+                // 更新书籍卡片上的收藏数（如果API返回了收藏数）
+                if (data.collection_count !== undefined) {
+                    updateBookCardCollectionCount(bookTitle, data.collection_count);
+                }
+                // 移除书籍卡片
+                removeBookCard(bookTitle);
+                // 更新收藏数（使用API返回的收藏数）
+                if (data.collection_count !== undefined) {
+                    updateCollectionCountByValue(data.collection_count);
+                } else {
+                    updateCollectionCount();
+                }
+            } else {
+                showMessage(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showMessage('操作失败，请重试', 'error');
+        });
+    }
+}
+
+// 移除书籍卡片
+function removeBookCard(bookTitle) {
+    const bookCards = document.querySelectorAll('.book-card');
+    bookCards.forEach(card => {
+        const titleElement = card.querySelector('.list-book-title, .font-semibold, h6');
+        if (titleElement && titleElement.textContent.trim() === bookTitle) {
+            // 在移除前更新卡片上的收藏数（如果API返回了收藏数）
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.8)';
+            setTimeout(() => {
+                card.remove();
+            }, 300);
+        }
+    });
+}
+
+// 更新书籍卡片上的收藏数
+function updateBookCardCollectionCount(bookTitle, count) {
+    const bookCards = document.querySelectorAll('.book-card');
+    bookCards.forEach(card => {
+        const titleElement = card.querySelector('h6.font-semibold');
+        if (titleElement && titleElement.textContent.trim() === bookTitle) {
+            // 查找卡片中的收藏数显示（在 book-stats 中）
+            const stats = card.querySelectorAll('.book-stats > div');
+            stats.forEach(stat => {
+                const icon = stat.querySelector('i.fa-heart');
+                if (icon) {
+                    // 收藏数在图标后面的文本节点中
+                    // 结构是: <i></i> <数字>
+                    const textNodes = Array.from(stat.childNodes);
+                    for (let node of textNodes) {
+                        if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+                            const text = node.textContent.trim();
+                            // 如果是数字，更新它
+                            if (!isNaN(text) && text !== '') {
+                                node.textContent = ' ' + count;
+                                break;
+                            }
+                        }
+                    }
+                    // 如果没找到文本节点，尝试更新整个stat的文本内容
+                    const currentText = stat.textContent.trim();
+                    const match = currentText.match(/(\d+)/);
+                    if (match) {
+                        stat.textContent = stat.textContent.replace(match[1], count);
+                    }
+                }
+            });
+        }
+    });
+}
+
+// 更新收藏数（通过增量）
+function updateCollectionCount() {
+    const statItems = document.querySelectorAll('.stat-item');
+    for (let item of statItems) {
+        const label = item.querySelector('.stat-label');
+        if (label && label.textContent.includes('收藏数')) {
+            const valueElement = item.querySelector('.stat-value');
+            if (valueElement) {
+                const currentCount = parseInt(valueElement.textContent) || 0;
+                valueElement.textContent = Math.max(0, currentCount - 1);
+            }
+            break;
+        }
+    }
+}
+
+// 更新收藏数（通过具体值）
+function updateCollectionCountByValue(count) {
+    const statItems = document.querySelectorAll('.stat-item');
+    for (let item of statItems) {
+        const label = item.querySelector('.stat-label');
+        if (label && label.textContent.includes('收藏数')) {
+            const valueElement = item.querySelector('.stat-value');
+            if (valueElement) {
+                valueElement.textContent = count;
+            }
+            break;
+        }
+    }
+}
+
+// 显示消息
+function showMessage(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const alertHtml = `
+        <div class="alert ${alertClass} p-4 rounded-lg border-l-4 flex justify-between items-center" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <span>${message}</span>
+            <button type="button" class="text-gray-400 hover:text-gray-600" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', alertHtml);
+    
+    setTimeout(() => {
+        const alert = document.querySelector('.alert');
+        if (alert) {
+            alert.remove();
+        }
+    }, 3000);
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 显示VIP充值模态框
+function showVipRechargeModal() {
+    document.getElementById('vipRechargeModal').classList.remove('hidden');
+    // 重置选择
+    document.querySelectorAll('.vip-package').forEach(pkg => {
+        pkg.querySelector('div').classList.remove('border-blue-500', 'bg-blue-50');
+        pkg.querySelector('div').classList.add('border-gray-200');
+    });
+    document.getElementById('selectedPackageInfo').classList.add('hidden');
+    document.getElementById('confirmRechargeBtn').disabled = true;
+}
+
+// 隐藏VIP充值模态框
+function hideVipRechargeModal() {
+    document.getElementById('vipRechargeModal').classList.add('hidden');
+}
+
+// 选择VIP套餐
+function selectVipPackage(element) {
+    // 移除所有选中状态
+    document.querySelectorAll('.vip-package').forEach(pkg => {
+        pkg.querySelector('div').classList.remove('border-blue-500', 'bg-blue-50');
+        pkg.querySelector('div').classList.add('border-gray-200');
+    });
+    
+    // 设置当前选中状态
+    const packageDiv = element.querySelector('div');
+    packageDiv.classList.remove('border-gray-200');
+    packageDiv.classList.add('border-blue-500', 'bg-blue-50');
+    
+    // 显示选中信息
+    const duration = element.getAttribute('data-duration');
+    const price = element.getAttribute('data-price');
+    
+    let durationText = '';
+    if (duration === '1') {
+        durationText = '1个月';
+    } else if (duration === '3') {
+        durationText = '3个月';
+    } else if (duration === '12') {
+        durationText = '1年';
+    }
+    
+    document.getElementById('selectedPackageText').textContent = durationText;
+    document.getElementById('selectedPackagePrice').textContent = '¥' + parseFloat(price).toFixed(2);
+    document.getElementById('selectedPackageInfo').classList.remove('hidden');
+    document.getElementById('confirmRechargeBtn').disabled = false;
+    
+    // 保存选中的套餐信息
+    element.setAttribute('data-selected', 'true');
+}
+
+// 确认VIP充值
+function confirmVipRecharge() {
+    const selectedPackage = document.querySelector('.vip-package[data-selected="true"]');
+    if (!selectedPackage) {
+        alert('请选择充值套餐');
+        return;
+    }
+    
+    const duration = selectedPackage.getAttribute('data-duration');
+    const price = parseFloat(selectedPackage.getAttribute('data-price'));
+    
+    if (confirm(`确认充值VIP ${duration === '1' ? '1个月' : duration === '3' ? '3个月' : '1年'}，需支付¥${price.toFixed(2)}吗？`)) {
+        // 发送充值请求
+        const formData = new FormData();
+        formData.append('duration', duration);
+        formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+        
+        fetch('{% url "vip_recharge" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage(data.message, 'success');
+                hideVipRechargeModal();
+                // 刷新页面以更新VIP状态和余额
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showMessage(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('充值失败，请重试', 'error');
+        });
+    }
+}
+</script>
+{% endblock %}
+

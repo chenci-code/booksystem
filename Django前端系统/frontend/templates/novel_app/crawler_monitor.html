@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}爬虫监控 - 管理后台{% endblock %}
+
+{% block extra_css %}
+<style>
+    .monitor-card {
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .stat-card.success {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+    
+    .stat-card.danger {
+        background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    }
+    
+    .stat-card.warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .progress-bar-animated {
+        animation: progress-animation 1s linear infinite;
+    }
+    
+    @keyframes progress-animation {
+        0% { background-position: 0 0; }
+        100% { background-position: 40px 0; }
+    }
+    
+    .task-status {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    .status-pending { background: #ffc107; color: #000; }
+    .status-running { background: #17a2b8; color: #fff; }
+    .status-completed { background: #28a745; color: #fff; }
+    .status-failed { background: #dc3545; color: #fff; }
+    
+    .refresh-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 1000;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-spider"></i> 爬虫监控中心</h2>
+            <p class="text-muted">实时监控爬虫任务状态和进度</p>
+        </div>
+    </div>
+    
+    <!-- 统计卡片 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <h6>总任务数</h6>
+                <h2 id="total-tasks">0</h2>
+                <small>累计爬取任务</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card success">
+                <h6>成功任务</h6>
+                <h2 id="completed-tasks">0</h2>
+                <small id="success-rate">成功率: 0%</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card danger">
+                <h6>失败任务</h6>
+                <h2 id="failed-tasks">0</h2>
+                <small>需要重试</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card warning">
+                <h6>运行中</h6>
+                <h2 id="running-tasks">0</h2>
+                <small>正在执行</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 任务列表 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card monitor-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i> 爬虫任务列表
+                        <button class="btn btn-sm btn-light float-right" onclick="refreshTasks()">
+                            <i class="fas fa-sync-alt"></i> 刷新
+                        </button>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>任务ID</th>
+                                    <th>书籍</th>
+                                    <th>类型</th>
+                                    <th>状态</th>
+                                    <th>进度</th>
+                                    <th>章节</th>
+                                    <th>耗时</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="task-list">
+                                <tr>
+                                    <td colspan="8" class="text-center">
+                                        <i class="fas fa-spinner fa-spin"></i> 加载中...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 失败任务详情模态框 -->
+    <div class="modal fade" id="errorModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">错误详情</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p id="error-message"></p>
+                    <h6>失败章节:</h6>
+                    <div id="failed-chapters"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 刷新按钮 -->
+<button class="btn btn-primary btn-lg refresh-btn" onclick="refreshTasks()" title="刷新数据">
+    <i class="fas fa-sync-alt"></i>
+</button>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let autoRefreshInterval = null;
+
+// 页面加载时初始化
+$(document).ready(function() {
+    loadStatistics();
+    loadTasks();
+    
+    // 启动自动刷新（每10秒）
+    autoRefreshInterval = setInterval(function() {
+        loadStatistics();
+        loadTasks();
+    }, 10000);
+});
+
+// 加载统计信息
+function loadStatistics() {
+    $.ajax({
+        url: '/api/crawler/statistics/',
+        method: 'GET',
+        success: function(data) {
+            $('#total-tasks').text(data.total_tasks);
+            $('#completed-tasks').text(data.completed_tasks);
+            $('#failed-tasks').text(data.failed_tasks);
+            $('#running-tasks').text(data.running_tasks);
+            $('#success-rate').text('成功率: ' + data.success_rate + '%');
+        },
+        error: function() {
+            console.error('加载统计信息失败');
+        }
+    });
+}
+
+// 加载任务列表
+function loadTasks() {
+    $.ajax({
+        url: '/api/crawler/tasks/',
+        method: 'GET',
+        success: function(data) {
+            renderTasks(data.tasks);
+        },
+        error: function() {
+            $('#task-list').html('<tr><td colspan="8" class="text-center text-danger">加载失败</td></tr>');
+        }
+    });
+}
+
+// 渲染任务列表
+function renderTasks(tasks) {
+    if (tasks.length === 0) {
+        $('#task-list').html('<tr><td colspan="8" class="text-center">暂无任务</td></tr>');
+        return;
+    }
+    
+    let html = '';
+    tasks.forEach(function(task) {
+        let statusClass = 'status-' + task.status;
+        let statusText = {
+            'pending': '等待中',
+            'running': '运行中',
+            'completed': '已完成',
+            'failed': '失败'
+        }[task.status];
+        
+        let progressBar = '';
+        if (task.status === 'running' || task.status === 'completed') {
+            let progressClass = task.status === 'running' ? 'progress-bar-animated progress-bar-striped' : '';
+            progressBar = `
+                <div class="progress" style="height: 20px;">
+                    <div class="progress-bar ${progressClass} bg-success" 
+                         style="width: ${task.progress}%">
+                        ${task.progress}%
+                    </div>
+                </div>
+            `;
+        } else {
+            progressBar = '<span class="text-muted">-</span>';
+        }
+        
+        let actions = '';
+        if (task.status === 'failed') {
+            actions = `
+                <button class="btn btn-sm btn-warning" onclick="retryTask('${task.task_id}')">
+                    <i class="fas fa-redo"></i> 重试
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="showError('${task.task_id}')">
+                    <i class="fas fa-exclamation-circle"></i> 详情
+                </button>
+            `;
+        } else if (task.status === 'completed') {
+            actions = '<span class="text-success"><i class="fas fa-check-circle"></i> 完成</span>';
+        } else {
+            actions = '<span class="text-muted">-</span>';
+        }
+        
+        html += `
+            <tr>
+                <td><small>${task.task_id}</small></td>
+                <td>${task.book_title}</td>
+                <td>${task.task_type === 'chapters' ? '章节' : '书籍信息'}</td>
+                <td><span class="task-status ${statusClass}">${statusText}</span></td>
+                <td style="min-width: 150px;">${progressBar}</td>
+                <td>${task.crawled_chapters}/${task.total_chapters}</td>
+                <td>${task.duration || '-'}</td>
+                <td>${actions}</td>
+            </tr>
+        `;
+    });
+    
+    $('#task-list').html(html);
+}
+
+// 刷新任务
+function refreshTasks() {
+    loadStatistics();
+    loadTasks();
+    
+    // 显示刷新提示
+    const btn = $('.refresh-btn');
+    btn.html('<i class="fas fa-spinner fa-spin"></i>');
+    setTimeout(function() {
+        btn.html('<i class="fas fa-sync-alt"></i>');
+    }, 1000);
+}
+
+// 重试任务
+function retryTask(taskId) {
+    if (!confirm('确定要重试这个任务吗？')) {
+        return;
+    }
+    
+    $.ajax({
+        url: '/api/crawler/retry/',
+        method: 'POST',
+        data: JSON.stringify({ task_id: taskId }),
+        contentType: 'application/json',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        success: function(data) {
+            if (data.success) {
+                alert('任务已重新加入队列');
+                refreshTasks();
+            } else {
+                alert('重试失败: ' + data.message);
+            }
+        },
+        error: function() {
+            alert('重试失败，请稍后再试');
+        }
+    });
+}
+
+// 显示错误详情
+function showError(taskId) {
+    $.ajax({
+        url: '/api/crawler/task/' + taskId + '/',
+        method: 'GET',
+        success: function(data) {
+            $('#error-message').text(data.error_message || '无错误信息');
+            
+            let failedHtml = '';
+            if (data.failed_chapters && data.failed_chapters.length > 0) {
+                failedHtml = '<ul>';
+                data.failed_chapters.forEach(function(chapter) {
+                    failedHtml += '<li>第' + chapter + '章</li>';
+                });
+                failedHtml += '</ul>';
+            } else {
+                failedHtml = '<p class="text-muted">无失败章节</p>';
+            }
+            $('#failed-chapters').html(failedHtml);
+            
+            $('#errorModal').modal('show');
+        }
+    });
+}
+
+// 页面卸载时清除定时器
+$(window).on('beforeunload', function() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+    }
+});
+</script>
+{% endblock %}

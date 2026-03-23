@@ -1,0 +1,768 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}用户管理 - 管理员中心{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- 管理员导航区域 -->
+    <div class="admin-nav-section"
+        style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important; border: 1px solid #e2e8f0 !important; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important; position: relative !important; overflow: hidden !important;">
+        <div class="admin-nav-header"
+            style="border-bottom: 1px solid #e2e8f0 !important; position: relative !important; z-index: 2 !important;">
+            <h1 style="color: #1e293b !important; font-weight: 700 !important;">用户管理</h1>
+            <p style="color: #64748b !important; font-weight: 400 !important;">管理系统中的所有用户信息</p>
+        </div>
+
+        <div class="admin-nav-options" style="position: relative !important; z-index: 2 !important;">
+            <a href="{% url 'admin_dashboard' %}" class="admin-nav-option"
+                style="background: #f8fafc !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; transition: all 0.3s ease !important;">
+                <i class="fas fa-tachometer-alt" style="font-size: 1.1rem !important;"></i>
+                <span style="font-weight: 500 !important;">数据概览</span>
+            </a>
+            <a href="{% url 'admin_books' %}" class="admin-nav-option"
+                style="background: #f8fafc !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; transition: all 0.3s ease !important;">
+                <i class="fas fa-book" style="font-size: 1.1rem !important;"></i>
+                <span style="font-weight: 500 !important;">书籍管理</span>
+            </a>
+            <a href="{% url 'admin_users' %}" class="admin-nav-option active"
+                style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important; border: 1px solid #3b82f6 !important; color: white !important; transition: all 0.3s ease !important; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2) !important;">
+                <i class="fas fa-users" style="font-size: 1.1rem !important;"></i>
+                <span style="font-weight: 500 !important;">用户管理</span>
+            </a>
+            <a href="{% url 'admin_orders' %}" class="admin-nav-option"
+                style="background: #f8fafc !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; transition: all 0.3s ease !important;">
+                <i class="fas fa-shopping-bag" style="font-size: 1.1rem !important;"></i>
+                <span style="font-weight: 500 !important;">订单管理</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 搜索和筛选区域 -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <form method="GET" class="flex flex-wrap gap-4 items-end">
+            <div class="flex-1 min-w-64">
+                <label for="search" class="block text-sm font-medium text-gray-700 mb-2">搜索用户</label>
+                <input type="text" id="search" name="search" value="{{ search_query }}" placeholder="输入用户名或姓名..."
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+
+            <div class="min-w-32">
+                <label for="vip_level" class="block text-sm font-medium text-gray-700 mb-2">VIP等级</label>
+                <select id="vip_level" name="vip_level"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">全部等级</option>
+                    {% for vip_choice in vip_level_choices %}
+                        <option value="{{ vip_choice.0 }}" {% if vip_choice.0 == vip_level %}selected{% endif %}>{{ vip_choice.1 }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="min-w-32">
+                <label for="status" class="block text-sm font-medium text-gray-700 mb-2">状态</label>
+                <select id="status" name="status"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">全部状态</option>
+                    {% for status_choice in status_choices %}
+                        <option value="{{ status_choice.0 }}" {% if status_choice.0 == status %}selected{% endif %}>{{ status_choice.1 }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="submit"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <i class="fas fa-search mr-2"></i>搜索
+                </button>
+                <a href="{% url 'admin_users' %}"
+                    class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                    <i class="fas fa-times mr-2"></i>清除
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- 操作按钮区域 -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+        <div class="flex justify-between items-center">
+            <div class="text-sm text-gray-600">
+                共找到 <span class="font-semibold text-gray-900">{{ total_users }}</span> 个用户
+            </div>
+            <button onclick="openAddUserModal()"
+                class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                <i class="fas fa-plus mr-2"></i>添加用户
+            </button>
+        </div>
+    </div>
+
+    <!-- 用户列表 -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户信息
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            VIP等级/状态</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">余额
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">注册时间
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for user in page_obj %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-12 w-12">
+                                    {% if user.avatar %}
+                                    <img class="h-12 w-12 rounded-full object-cover" src="{{ user.avatar.url }}"
+                                        alt="{{ user.name }}">
+                                    {% else %}
+                                    <div class="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
+                                        <i class="fas fa-user text-gray-400"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ user.name }}</div>
+                                    <div class="text-sm text-gray-500">{{ user.username }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                                {% if user.vip_level == 'VIP' %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ user.get_vip_level_display }}
+                            </span>
+                            <div class="mt-1">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                                    {% if user.status == '正常' %}bg-green-100 text-green-800
+                                    {% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ user.status }}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ¥{{ user.balance|floatformat:2 }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ user.register_time|date:"Y-m-d H:i" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <button data-user-id="{{ user.user_id }}" onclick="viewUser(this.dataset.userId)"
+                                    class="text-blue-600 hover:text-blue-900">
+                                    <i class="fas fa-eye"></i> 查看
+                                </button>
+                                <button data-user-id="{{ user.user_id }}" onclick="editUser(this.dataset.userId)"
+                                    class="text-green-600 hover:text-green-900">
+                                    <i class="fas fa-edit"></i> 编辑
+                                </button>
+                                <button data-user-id="{{ user.user_id }}" data-user-status="{{ user.status|escapejs }}"
+                                    onclick="toggleUserStatus(this.dataset.userId, this.dataset.userStatus)"
+                                    class="text-orange-600 hover:text-orange-900">
+                                    <i class="fas fa-toggle-on"></i>
+                                    {% if user.status == '正常' %}禁用{% else %}启用{% endif %}
+                                </button>
+                                <button data-user-id="{{ user.user_id }}" data-user-name="{{ user.name|escapejs }}"
+                                    onclick="deleteUser(this.dataset.userId, this.dataset.userName)"
+                                    class="text-red-600 hover:text-red-900"></button>
+                                <i class="fas fa-trash"></i> 删除
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                            <i class="fas fa-users text-4xl text-gray-300 mb-4"></i>
+                            <div>暂无用户数据</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 分页 -->
+    {% if page_obj.has_other_pages %}
+    <div
+        class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-6 rounded-lg shadow-sm">
+        <div class="flex-1 flex justify-between sm:hidden">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&vip_level={{ vip_level }}&status={{ status }}"
+                class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                上一页
+            </a>
+            {% endif %}
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&vip_level={{ vip_level }}&status={{ status }}"
+                class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                下一页
+            </a>
+            {% endif %}
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-gray-700">
+                    显示第 <span class="font-medium">{{ page_obj.start_index }}</span> 到
+                    <span class="font-medium">{{ page_obj.end_index }}</span> 条，
+                    共 <span class="font-medium">{{ page_obj.paginator.count }}</span> 条记录
+                </p>
+            </div>
+            <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&vip_level={{ vip_level }}&status={{ status }}"
+                        class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <span
+                        class="relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 text-sm font-medium text-blue-600">
+                        {{ num }}
+                    </span>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <a
+                        href="?page={{ num }}&search={{ search_query }}&vip_level={{ vip_level }}&status={{ status }}"
+                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        {{ num }}
+                        </a>
+                        {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&vip_level={{ vip_level }}&status={{ status }}"
+                            class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        {% endif %}
+                </nav>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 添加用户模态框 -->
+<div id="addUserModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">添加新用户</h3>
+                <button onclick="closeAddUserModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="addUserForm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-2">姓名 *</label>
+                        <input type="text" id="name" name="name" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-2">用户名 *</label>
+                        <input type="text" id="username" name="username" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">密码 *</label>
+                        <input type="password" id="password" name="password" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="vip_level" class="block text-sm font-medium text-gray-700 mb-2">VIP等级</label>
+                        <select id="vip_level" name="vip_level"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="普通">普通用户</option>
+                            <option value="VIP">VIP用户</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="balance" class="block text-sm font-medium text-gray-700 mb-2">余额</label>
+                        <input type="number" id="balance" name="balance" step="0.01" min="0" value="0"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-2">状态</label>
+                        <select id="status" name="status"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="正常">正常</option>
+                            <option value="禁用">禁用</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeAddUserModal()"
+                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                        取消
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <span id="addUserBtnText">添加用户</span>
+                        <i id="addUserSpinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 查看用户详情模态框 -->
+<div id="viewUserModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">用户详情</h3>
+                <button onclick="closeViewUserModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div id="userDetailContent">
+                <!-- 用户详情内容将通过JavaScript动态填充 -->
+            </div>
+
+            <div class="flex justify-end mt-6">
+                <button onclick="closeViewUserModal()"
+                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑用户模态框 -->
+<div id="editUserModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">编辑用户</h3>
+                <button onclick="closeEditUserModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="editUserForm">
+                <input type="hidden" id="editUserId" name="user_id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="editUserName" class="block text-sm font-medium text-gray-700 mb-2">姓名 *</label>
+                        <input type="text" id="editUserName" name="name" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="editUserUsername" class="block text-sm font-medium text-gray-700 mb-2">用户名 *</label>
+                        <input type="text" id="editUserUsername" name="username" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="editUserPassword" class="block text-sm font-medium text-gray-700 mb-2">新密码</label>
+                        <input type="password" id="editUserPassword" name="password" placeholder="留空则不修改密码"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="editUserVipLevel" class="block text-sm font-medium text-gray-700 mb-2">VIP等级</label>
+                        <select id="editUserVipLevel" name="vip_level"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="普通">普通用户</option>
+                            <option value="VIP">VIP用户</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="editUserBalance" class="block text-sm font-medium text-gray-700 mb-2">余额</label>
+                        <input type="number" id="editUserBalance" name="balance" step="0.01" min="0"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="editUserStatus" class="block text-sm font-medium text-gray-700 mb-2">状态</label>
+                        <select id="editUserStatus" name="status"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="正常">正常</option>
+                            <option value="禁用">禁用</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeEditUserModal()"
+                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                        取消
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <span id="editUserBtnText">保存修改</span>
+                        <i id="editUserSpinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/admin.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 获取CSRF令牌
+    function getCSRFToken() {
+        const token = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (token) {
+            return token.value;
+        }
+        // 如果找不到CSRF令牌，尝试从cookie获取
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'csrftoken') {
+                return value;
+            }
+        }
+        return '';
+    }
+
+    // 显示消息提示
+    function showMessage(message, type = 'success') {
+        const alertClass = type === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700';
+        const iconClass = type === 'success' ? 'fa-check-circle text-green-400' : 'fa-exclamation-circle text-red-400';
+
+        const alertHtml = `
+        <div class="fixed top-4 right-4 z-50 max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden">
+            <div class="p-4">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas ${iconClass}"></i>
+                    </div>
+                    <div class="ml-3 w-0 flex-1 pt-0.5">
+                        <p class="text-sm font-medium text-gray-900">${message}</p>
+                    </div>
+                    <div class="ml-4 flex-shrink-0 flex">
+                        <button class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+        document.body.insertAdjacentHTML('beforeend', alertHtml);
+
+        // 3秒后自动消失
+        setTimeout(() => {
+            const alert = document.querySelector('.fixed.top-4.right-4');
+            if (alert) {
+                alert.remove();
+            }
+        }, 3000);
+    }
+
+    // 打开添加用户模态框
+    function openAddUserModal() {
+        document.getElementById('addUserModal').classList.remove('hidden');
+        document.getElementById('addUserForm').reset();
+    }
+
+    // 关闭添加用户模态框
+    function closeAddUserModal() {
+        document.getElementById('addUserModal').classList.add('hidden');
+    }
+
+    // 查看用户详情
+    function viewUser(userId) {
+        fetch(`/api/admin/get-user-detail/${userId}/`, {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const user = data.user;
+                    const detailHtml = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">姓名</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.name}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">用户名</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.username}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">VIP等级</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.vip_level}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">状态</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.status}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">余额</label>
+                        <p class="mt-1 text-sm text-gray-900">¥${parseFloat(user.balance).toFixed(2)}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">注册时间</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.register_time}</p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700">购买书籍数量</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.owned_books_count} 本</p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700">订单数量</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.orders_count} 个</p>
+                    </div>
+                </div>
+            `;
+                    document.getElementById('userDetailContent').innerHTML = detailHtml;
+                    document.getElementById('viewUserModal').classList.remove('hidden');
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('获取用户详情失败', 'error');
+            });
+    }
+
+    // 关闭查看用户模态框
+    function closeViewUserModal() {
+        document.getElementById('viewUserModal').classList.add('hidden');
+    }
+
+    // 关闭编辑用户模态框
+    function closeEditUserModal() {
+        document.getElementById('editUserModal').classList.add('hidden');
+    }
+
+    // 编辑用户
+    function editUser(userId) {
+        // 获取用户信息
+        fetch(`/api/admin/get-user/${userId}/`, {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const user = data.user;
+                    document.getElementById('editUserId').value = user.user_id;
+                    document.getElementById('editUserName').value = user.name;
+                    document.getElementById('editUserUsername').value = user.username;
+                    document.getElementById('editUserVipLevel').value = user.vip_level;
+                    document.getElementById('editUserStatus').value = user.status;
+                    document.getElementById('editUserBalance').value = user.balance;
+
+                    document.getElementById('editUserModal').classList.remove('hidden');
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('获取用户信息失败', 'error');
+            });
+    }
+
+    // 切换用户状态
+    function toggleUserStatus(userId, currentStatus) {
+        const newStatus = currentStatus === '正常' ? '禁用' : '正常';
+        const action = newStatus === '正常' ? '启用' : '禁用';
+
+        if (confirm(`确定要${action}该用户吗？`)) {
+            fetch('/api/admin/toggle-user-status/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken(),
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    status: newStatus
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showMessage(`用户${action}成功`);
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        showMessage(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showMessage('操作失败，请稍后重试', 'error');
+                });
+        }
+    }
+
+    // 删除用户
+    function deleteUser(userId, userName) {
+        if (confirm(`确定要删除用户"${userName}"吗？此操作不可恢复！`)) {
+            fetch('/api/admin/delete-user/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken(),
+                },
+                body: JSON.stringify({
+                    user_id: userId
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showMessage('用户删除成功');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        showMessage(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showMessage('删除失败，请稍后重试', 'error');
+                });
+        }
+    }
+
+    // 添加用户表单提交
+    document.getElementById('addUserForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData);
+
+        // 显示加载状态
+        document.getElementById('addUserBtnText').textContent = '添加中...';
+        document.getElementById('addUserSpinner').classList.remove('hidden');
+
+        fetch('/api/admin/add-user/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken(),
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('用户添加成功');
+                    closeAddUserModal();
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('添加失败，请稍后重试', 'error');
+            })
+            .finally(() => {
+                // 恢复按钮状态
+                document.getElementById('addUserBtnText').textContent = '添加用户';
+                document.getElementById('addUserSpinner').classList.add('hidden');
+            });
+    });
+
+    // 编辑用户表单提交
+    document.getElementById('editUserForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData);
+
+        // 显示加载状态
+        document.getElementById('editUserBtnText').textContent = '保存中...';
+        document.getElementById('editUserSpinner').classList.remove('hidden');
+
+        fetch('/api/admin/update-user/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken(),
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('用户信息更新成功');
+                    closeEditUserModal();
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('更新失败，请稍后重试', 'error');
+            })
+            .finally(() => {
+                // 恢复按钮状态
+                document.getElementById('editUserBtnText').textContent = '保存修改';
+                document.getElementById('editUserSpinner').classList.add('hidden');
+            });
+    });
+
+    // 点击模态框外部关闭
+    document.getElementById('addUserModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeAddUserModal();
+        }
+    });
+
+    document.getElementById('viewUserModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeViewUserModal();
+        }
+    });
+
+    document.getElementById('editUserModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeEditUserModal();
+        }
+    });
+</script>
+{% endblock %}

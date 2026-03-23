@@ -1,0 +1,582 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}用户注册 - 小说阅读系统{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-center">
+        <div class="w-full max-w-lg">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h4 class="flex items-center justify-center text-xl font-bold text-gray-900">
+                        <i class="fas fa-user-plus text-blue-600 mr-3"></i> 用户注册
+                    </h4>
+                    <p class="text-gray-600 mt-2">创建您的小说阅读账户</p>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="registerForm">
+                        {% csrf_token %}
+                        <div class="mb-6">
+                            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">真实姓名</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-id-card text-gray-400"></i>
+                                </div>
+                                <input type="text" 
+                                       class="form-input pl-10" 
+                                       id="name" 
+                                       name="name" 
+                                       placeholder="请输入真实姓名" 
+                                       required>
+                            </div>
+                            <p class="mt-1 text-sm text-gray-500">请输入您的真实姓名，用于订单和客服联系</p>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label for="username" class="block text-sm font-medium text-gray-700 mb-2">用户名</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-user text-gray-400"></i>
+                                </div>
+                                <input type="text" 
+                                       class="form-input pl-10" 
+                                       id="username" 
+                                       name="username" 
+                                       placeholder="请输入用户名" 
+                                       required>
+                            </div>
+                            <p class="mt-1 text-sm text-gray-500">用户名用于登录，建议使用字母、数字和下划线</p>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">密码</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </div>
+                                <input type="password" 
+                                       class="form-input pl-10 pr-10" 
+                                       id="password" 
+                                       name="password" 
+                                       placeholder="请输入密码" 
+                                       required>
+                                <button type="button" 
+                                        class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                        onclick="togglePassword('password')">
+                                    <i class="fas fa-eye text-gray-400 hover:text-gray-600" id="passwordToggle"></i>
+                                </button>
+                            </div>
+                            <div class="password-strength-container">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm text-gray-600 font-medium">密码强度</span>
+                                    <span class="password-strength-text text-gray-500" id="passwordStrengthText">请输入密码</span>
+                                </div>
+                                <div class="password-strength-bar">
+                                    <div class="password-strength-fill" id="passwordStrength" style="width: 0%"></div>
+                                </div>
+                                <div class="password-strength-tips text-gray-500" id="passwordStrengthTip"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-2">确认密码</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </div>
+                                <input type="password" 
+                                       class="form-input pl-10 pr-10" 
+                                       id="confirm_password" 
+                                       name="confirm_password" 
+                                       placeholder="请再次输入密码" 
+                                       required>
+                                <button type="button" 
+                                        class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                        onclick="togglePassword('confirm_password')">
+                                    <i class="fas fa-eye text-gray-400 hover:text-gray-600" id="confirmPasswordToggle"></i>
+                                </button>
+                            </div>
+                            <p class="mt-1 text-sm" id="passwordMatch"></p>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <div class="flex items-start">
+                                <input type="checkbox" 
+                                       class="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out mt-1" 
+                                       id="agreeTerms" 
+                                       required>
+                                <label class="ml-2 block text-sm text-gray-700" for="agreeTerms">
+                                    我已阅读并同意 <a href="#" class="text-blue-600 hover:text-blue-500 underline" onclick="showTerms()">用户协议</a> 和 <a href="#" class="text-blue-600 hover:text-blue-500 underline" onclick="showPrivacy()">隐私政策</a>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <button type="submit" class="btn btn-primary w-full">
+                                <i class="fas fa-user-plus mr-2"></i> 立即注册
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="border-t border-gray-200 pt-6">
+                        <div class="text-center">
+                            <p class="text-sm text-gray-600 mb-3">已有账号？</p>
+                            <a href="{% url 'login' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-sign-in-alt mr-2"></i> 立即登录
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 注册页面专用样式 */
+.form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #374151;
+    background-color: #ffffff;
+    transition: all 0.2s ease-in-out;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-input::placeholder {
+    color: #9ca3af;
+}
+
+.form-checkbox {
+    border: 1px solid #d1d5db;
+    border-radius: 0.25rem;
+}
+
+.form-checkbox:checked {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+.form-checkbox:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* 按钮样式 */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.5;
+    border-radius: 0.5rem;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background-color: #3b82f6;
+    color: #ffffff;
+    border-color: #3b82f6;
+}
+
+.btn-primary:hover {
+    background-color: #2563eb;
+    border-color: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-outline-primary {
+    background-color: transparent;
+    color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+.btn-outline-primary:hover {
+    background-color: #3b82f6;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.w-full {
+    width: 100%;
+}
+
+/* 密码强度指示器 - 优化样式 */
+.password-strength-container {
+    margin-top: 0.5rem;
+}
+
+.password-strength-bar {
+    position: relative;
+    overflow: hidden;
+    border-radius: 9999px;
+    background-color: #e5e7eb;
+    height: 8px;
+    transition: all 0.5s ease-out;
+}
+
+.password-strength-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: all 0.5s ease-out;
+    position: relative;
+}
+
+.password-strength-fill.weak {
+    background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+}
+
+.password-strength-fill.medium {
+    background: linear-gradient(90deg, #eab308 0%, #ca8a04 100%);
+    box-shadow: 0 0 8px rgba(234, 179, 8, 0.3);
+}
+
+.password-strength-fill.strong {
+    background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
+}
+
+.password-strength-text {
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    transition: color 0.3s ease;
+}
+
+.password-strength-tips {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+}
+
+/* 强度指示器动画效果 */
+@keyframes strengthPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.password-strength-fill.strong {
+    animation: strengthPulse 2s ease-in-out infinite;
+}
+
+/* 响应式调整 */
+@media (max-width: 640px) {
+    .password-strength-text {
+        font-size: 0.8rem;
+    }
+    
+    .password-strength-tips {
+        font-size: 0.7rem;
+    }
+}
+
+/* 响应式设计 */
+@media (max-width: 640px) {
+    .max-w-lg {
+        max-width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function togglePassword(fieldId) {
+    const passwordInput = document.getElementById(fieldId);
+    const passwordToggle = document.getElementById(fieldId + 'Toggle');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        passwordToggle.className = 'fas fa-eye-slash text-gray-400 hover:text-gray-600';
+    } else {
+        passwordInput.type = 'password';
+        passwordToggle.className = 'fas fa-eye text-gray-400 hover:text-gray-600';
+    }
+}
+
+// 密码强度检测函数 - 优化为3档分级
+function updatePasswordStrength() {
+    const passwordInput = document.getElementById('password');
+    const password = passwordInput.value;
+    const strengthBar = document.getElementById('passwordStrength');
+    const strengthText = document.getElementById('passwordStrengthText');
+    
+    // 如果密码为空，重置为初始状态
+    if (!password || password.length === 0) {
+        strengthBar.style.width = '0%';
+        strengthBar.className = 'password-strength-fill';
+        strengthText.textContent = '请输入密码';
+        strengthText.className = 'password-strength-text text-gray-500';
+        return;
+    }
+    
+    // 计算字符类型数量
+    let charTypes = 0;
+    if (/[a-z]/.test(password)) charTypes++; // 小写字母
+    if (/[A-Z]/.test(password)) charTypes++; // 大写字母
+    if (/[0-9]/.test(password)) charTypes++; // 数字
+    if (/[^A-Za-z0-9]/.test(password)) charTypes++; // 特殊字符
+    
+    let strengthLevel = 0;
+    let strengthLabel = '';
+    let strengthClass = '';
+    let textClass = '';
+    let percentage = 0;
+    
+    // 3档分级逻辑
+    if (password.length < 8 || charTypes < 2) {
+        // 弱：长度少于8位，或只有1种字符类型
+        strengthLevel = 1;
+        strengthLabel = '弱';
+        strengthClass = 'password-strength-fill weak';
+        textClass = 'password-strength-text text-red-600';
+        percentage = 33;
+    } else if (password.length >= 8 && password.length < 12 && charTypes >= 2 && charTypes < 4) {
+        // 中：8-12位，包含2-3种字符类型
+        strengthLevel = 2;
+        strengthLabel = '中';
+        strengthClass = 'password-strength-fill medium';
+        textClass = 'password-strength-text text-yellow-600';
+        percentage = 66;
+    } else if (password.length >= 12 && charTypes >= 4) {
+        // 强：12位以上，包含4种字符类型
+        strengthLevel = 3;
+        strengthLabel = '强';
+        strengthClass = 'password-strength-fill strong';
+        textClass = 'password-strength-text text-green-600';
+        percentage = 100;
+    } else if (password.length >= 8 && charTypes >= 4) {
+        // 强：8位以上且包含4种字符类型
+        strengthLevel = 3;
+        strengthLabel = '强';
+        strengthClass = 'password-strength-fill strong';
+        textClass = 'password-strength-text text-green-600';
+        percentage = 100;
+    } else {
+        // 中等：其他情况
+        strengthLevel = 2;
+        strengthLabel = '中';
+        strengthClass = 'password-strength-fill medium';
+        textClass = 'password-strength-text text-yellow-600';
+        percentage = 66;
+    }
+    
+    // 更新强度条
+    strengthBar.style.width = percentage + '%';
+    strengthBar.className = strengthClass;
+    
+    // 更新强度文本和提示信息
+    strengthText.textContent = strengthLabel;
+    strengthText.className = textClass;
+    
+    // 添加详细提示信息
+    let tips = '';
+    if (strengthLevel === 1) {
+        if (password.length < 8) tips = '建议密码长度至少8位';
+        else if (charTypes < 2) tips = '建议包含字母、数字或特殊字符';
+    } else if (strengthLevel === 2) {
+        tips = '密码强度良好，建议增加长度或字符类型';
+    } else if (strengthLevel === 3) {
+        tips = '密码强度优秀！';
+    }
+    
+    // 更新或创建提示元素
+    let tipElement = document.getElementById('passwordStrengthTip');
+    if (!tipElement) {
+        tipElement = document.createElement('div');
+        tipElement.id = 'passwordStrengthTip';
+        tipElement.className = 'password-strength-tips';
+        strengthText.parentElement.appendChild(tipElement);
+    }
+    tipElement.textContent = tips;
+    tipElement.className = 'password-strength-tips ' + (strengthLevel === 3 ? 'text-green-600' : 
+                                                       strengthLevel === 2 ? 'text-yellow-600' : 'text-red-600');
+    
+    // 当密码改变时，重新验证确认密码
+    const confirmPassword = document.getElementById('confirm_password').value;
+    const matchText = document.getElementById('passwordMatch');
+    
+    if (confirmPassword !== '') {
+        if (password === confirmPassword) {
+            matchText.textContent = '✓ 密码匹配';
+            matchText.className = 'mt-1 text-sm text-green-600';
+        } else {
+            matchText.textContent = '✗ 密码不匹配';
+            matchText.className = 'mt-1 text-sm text-red-600';
+        }
+    }
+}
+
+// 绑定密码强度检测事件
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordInput = document.getElementById('password');
+    if (passwordInput) {
+        // 绑定多个事件确保实时响应
+        passwordInput.addEventListener('input', updatePasswordStrength);
+        passwordInput.addEventListener('keyup', updatePasswordStrength);
+        passwordInput.addEventListener('paste', function() {
+            // 粘贴后延迟一点时间再检测，确保内容已更新
+            setTimeout(updatePasswordStrength, 10);
+        });
+        
+        // 初始化强度显示
+        updatePasswordStrength();
+    }
+});
+
+// 确认密码验证
+document.getElementById('confirm_password').addEventListener('input', function() {
+    const password = document.getElementById('password').value;
+    const confirmPassword = this.value;
+    const matchText = document.getElementById('passwordMatch');
+    
+    if (confirmPassword === '') {
+        matchText.textContent = '';
+        matchText.className = 'mt-1 text-sm';
+    } else if (password === confirmPassword) {
+        matchText.textContent = '✓ 密码匹配';
+        matchText.className = 'mt-1 text-sm text-green-600';
+    } else {
+        matchText.textContent = '✗ 密码不匹配';
+        matchText.className = 'mt-1 text-sm text-red-600';
+    }
+});
+
+// 表单验证
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    const name = document.getElementById('name').value.trim();
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const confirmPassword = document.getElementById('confirm_password').value.trim();
+    const agreeTerms = document.getElementById('agreeTerms').checked;
+    
+    // 验证姓名
+    if (!name) {
+        e.preventDefault();
+        showMessage('请输入真实姓名', 'error');
+        return;
+    }
+    
+    if (name.length < 2) {
+        e.preventDefault();
+        showMessage('姓名长度不能少于2个字符', 'error');
+        return;
+    }
+    
+    // 验证用户名
+    if (!username) {
+        e.preventDefault();
+        showMessage('请输入用户名', 'error');
+        return;
+    }
+    
+    if (username.length < 3) {
+        e.preventDefault();
+        showMessage('用户名长度不能少于3个字符', 'error');
+        return;
+    }
+    
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+        e.preventDefault();
+        showMessage('用户名只能包含字母、数字和下划线', 'error');
+        return;
+    }
+    
+    // 验证密码
+    if (!password) {
+        e.preventDefault();
+        showMessage('请输入密码', 'error');
+        return;
+    }
+    
+    if (password.length < 6) {
+        e.preventDefault();
+        showMessage('密码长度不能少于6位', 'error');
+        return;
+    }
+    
+    // 验证确认密码
+    if (password !== confirmPassword) {
+        e.preventDefault();
+        showMessage('两次输入的密码不一致', 'error');
+        return;
+    }
+    
+    // 验证协议
+    if (!agreeTerms) {
+        e.preventDefault();
+        showMessage('请阅读并同意用户协议和隐私政策', 'error');
+        return;
+    }
+});
+
+function showTerms() {
+    showMessage('用户协议功能暂未开放', 'info');
+}
+
+function showPrivacy() {
+    showMessage('隐私政策功能暂未开放', 'info');
+}
+
+function showMessage(message, type) {
+    const alertClass = type === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 
+                      type === 'info' ? 'bg-blue-100 border-blue-400 text-blue-700' :
+                      'bg-red-100 border-red-400 text-red-700';
+    const alertHtml = `
+        <div class="fixed top-4 right-4 z-50 max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden">
+            <div class="p-4">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas ${type === 'success' ? 'fa-check-circle text-green-400' : 
+                                      type === 'info' ? 'fa-info-circle text-blue-400' :
+                                      'fa-exclamation-circle text-red-400'}"></i>
+                    </div>
+                    <div class="ml-3 w-0 flex-1 pt-0.5">
+                        <p class="text-sm font-medium text-gray-900">${message}</p>
+                    </div>
+                    <div class="ml-4 flex-shrink-0 flex">
+                        <button class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', alertHtml);
+    
+    // 3秒后自动消失
+    setTimeout(() => {
+        const alert = document.querySelector('.fixed.top-4.right-4');
+        if (alert) {
+            alert.remove();
+        }
+    }, 3000);
+}
+</script>
+{% endblock %}
+
