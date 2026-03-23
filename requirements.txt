@@ -6,14 +6,14 @@ whitenoise==6.11.0
 dj-database-url
 PyMySQL==1.1.2
 
-scikit-learn==1.6.1
-pandas==2.2.2
-numpy==1.26.4
+scikit-learn
+pandas
+numpy
 scipy
 
-Pillow==11.2.1
-requests==2.32.3
+Pillow
+requests
 beautifulsoup4
-jieba==0.42.1
-django-simpleui==2025.5.262
-django-filter==2.4.0
+jieba
+django-simpleui
+django-filter
