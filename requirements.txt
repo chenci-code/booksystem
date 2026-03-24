@@ -13,7 +13,9 @@ scipy
 
 Pillow
 requests
+httpx
 beautifulsoup4
+lxml
 jieba
 django-simpleui
 django-filter

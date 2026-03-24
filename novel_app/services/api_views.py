@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 @csrf_exempt
 @require_http_methods(["POST"])
-def crawl_single_chapter_api(request):
+def _crawl_single_chapter_api_legacy(request):
     """
     爬取单个章节API
     
@@ -137,6 +137,76 @@ def crawl_single_chapter_api(request):
         }, status=400)
     except Exception as e:
         logger.error(f"爬取章节失败: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': f'爬取失败: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def crawl_single_chapter_api(request):
+    """按书籍和章节号爬取单章内容。"""
+    admin = get_current_admin(request)
+    if not admin:
+        return JsonResponse({
+            'success': False,
+            'message': '需要管理员权限'
+        }, status=403)
+
+    try:
+        data = json.loads(request.body)
+        book_id = data.get('book_id')
+        book_title = data.get('book_title')
+        chapter_number = data.get('chapter_number')
+
+        if not chapter_number:
+            return JsonResponse({
+                'success': False,
+                'message': '缺少必要参数: chapter_number'
+            }, status=400)
+
+        try:
+            chapter_number = int(chapter_number)
+        except (ValueError, TypeError):
+            return JsonResponse({
+                'success': False,
+                'message': 'chapter_number 格式错误'
+            }, status=400)
+
+        if book_id:
+            book = BookName.objects.filter(book_id=book_id).first()
+        elif book_title:
+            book = BookName.objects.filter(title=book_title).first()
+        else:
+            book = None
+
+        if not book:
+            return JsonResponse({
+                'success': False,
+                'message': '书籍不存在或缺少 book_id/book_title'
+            }, status=404)
+
+        crawler = DjangoBookCrawlerService()
+        result = crawler.crawl_book_chapters(
+            book_id=book.book_id,
+            max_chapters=1,
+            async_crawl=False,
+            chapter_numbers=[chapter_number]
+        )
+
+        status_code = 200 if result.get('success') else 400
+        return JsonResponse(result, status=status_code)
+
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'message': '无效的JSON数据'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"爬取章节失败: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         return JsonResponse({
             'success': False,
             'message': f'爬取失败: {str(e)}'

@@ -11,6 +11,7 @@ import sys
 import json
 import logging
 import asyncio
+from pathlib import Path
 from typing import List, Dict, Optional
 from django.conf import settings
 from django.utils import timezone
@@ -23,7 +24,8 @@ from django.utils import timezone
 # 获取Django项目根目录
 django_project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 # 获取小说目录（Django项目根目录的父目录）
-novel_root = os.path.dirname(django_project_root)
+django_project_root = str(Path(settings.BASE_DIR).resolve())
+novel_root = django_project_root
 
 crawler_paths = [
     # 方式1: 从小说根目录进入爬虫代码（最可能的位置）
@@ -38,6 +40,15 @@ crawler_paths = [
 
 # 初始化logger（在使用前定义）
 logger = logging.getLogger(__name__)
+
+env_crawler_path = os.environ.get('NOVEL_CRAWLER_DIR')
+extra_crawler_paths = [
+    env_crawler_path,
+    os.path.join(django_project_root, '爬虫代码'),
+    os.path.join(django_project_root, 'crawler_code'),
+    os.path.join(os.path.dirname(__file__), '爬虫代码'),
+]
+crawler_paths = [path for path in extra_crawler_paths + crawler_paths if path]
 
 crawler_path = None
 for path in crawler_paths:
@@ -463,12 +474,15 @@ class DjangoBookCrawlerService:
                 safe_chapter_title = self._sanitize_filename(chapter_title)
                 content_filename = f"{safe_book_title}_{safe_chapter_title}.txt"
                 content_file_path = os.path.join('book_contents', content_filename)
+                full_content_path = os.path.join(self.content_dir, content_filename)
+                chapter_content = '\n'.join(content_lines).strip()
                 
                 # 保存内容到文件
                 full_content_path = os.path.join(self.content_dir, content_filename)
                 with open(full_content_path, 'w', encoding='utf-8') as f:
-                    for line in content_lines:
-                        f.write(line + '\n')
+                    if chapter_content:
+                        f.write(chapter_content)
+                        f.write('\n')
                 
                 # 计算字数
                 word_count = sum(len(line) for line in content_lines)
@@ -479,6 +493,7 @@ class DjangoBookCrawlerService:
                     chapter_number=chapter_number,
                     defaults={
                         'chapter_title': chapter_title,
+                        'chapter_content': chapter_content,
                         'content_file_path': content_file_path,
                         'word_count': word_count,
                         'is_crawled': True,
@@ -486,8 +501,8 @@ class DjangoBookCrawlerService:
                     }
                 )
                 
+                saved_count += 1
                 if created:
-                    saved_count += 1
                     logger.info(f"保存章节: {chapter_title} (第{chapter_number}章)")
                 else:
                     logger.info(f"更新章节: {chapter_title} (第{chapter_number}章)")
@@ -519,7 +534,10 @@ class DjangoBookCrawlerService:
                 book_title=book_title,
                 chapter_number=chapter_number
             )
-            
+
+            if chapter.chapter_content:
+                return chapter.chapter_content
+
             if not chapter.content_file_path:
                 return None
             
@@ -674,10 +692,19 @@ class DjangoBookCrawlerService:
                     book.author = book_info['author']
                 if book_info.get('description'):
                     book.description = book_info['description']
+                if book_info.get('url'):
+                    book.book_url = book_info['url']
+                if book_info.get('cover_url'):
+                    book.cover_url = book_info['cover_url']
                 if book_info.get('word_count'):
                     book.word_count = book_info['word_count']
                 if book_info.get('status'):
                     book.status = book_info['status']
+                if book_info.get('collection_count'):
+                    try:
+                        book.collection_count = int(str(book_info['collection_count']).replace(',', ''))
+                    except (ValueError, TypeError):
+                        pass
                 if book_info.get('rating'):
                     try:
                         book.rating = float(book_info['rating'])

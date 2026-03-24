@@ -2440,13 +2440,40 @@ def get_orders_by_status(request):
     """自动生成的函数 - get_orders_by_status"""
     return JsonResponse({'success': False, 'message': '功能暂未实现'})
 
-def get_qimao_book_info(request):
-    """自动生成的函数 - get_qimao_book_info"""
-    return JsonResponse({'success': False, 'message': '功能暂未实现'})
+def get_qimao_book_info(request, book_id):
+    """从奇猫网抓取并返回书籍详情信息。"""
+    if request.method != 'GET':
+        return JsonResponse({'success': False, 'message': '请求方法错误'}, status=405)
 
-def get_qimao_chapter_list(request):
-    """自动生成的函数 - get_qimao_chapter_list"""
-    return JsonResponse({'success': False, 'message': '功能暂未实现'})
+    try:
+        crawler_service = DjangoBookCrawlerService()
+        result = crawler_service.get_book_info_from_qimao(book_id)
+
+        status_code = 200 if result.get('success') else 400
+        return JsonResponse(result, status=status_code)
+    except Exception as e:
+        logger.error(f"获取奇猫书籍信息失败: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return JsonResponse({'success': False, 'message': f'获取书籍信息失败: {str(e)}'}, status=500)
+
+
+def get_qimao_chapter_list(request, book_id):
+    """从奇猫网抓取并返回章节目录。"""
+    if request.method != 'GET':
+        return JsonResponse({'success': False, 'message': '请求方法错误'}, status=405)
+
+    try:
+        crawler_service = DjangoBookCrawlerService()
+        result = crawler_service.get_chapter_list(book_id)
+
+        status_code = 200 if result.get('success') else 400
+        return JsonResponse(result, status=status_code)
+    except Exception as e:
+        logger.error(f"获取奇猫章节列表失败: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return JsonResponse({'success': False, 'message': f'获取章节列表失败: {str(e)}'}, status=500)
 
 def get_rotating_recommendations(request):
     """
