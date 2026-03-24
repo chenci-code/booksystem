@@ -215,3 +215,5 @@ LOGGING = {
         },
     },
 }
+ALLOWED_HOSTS = ['*']
+WHITENOISE_MANIFEST_STRICT = False
